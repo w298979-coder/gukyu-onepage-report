@@ -15,7 +15,6 @@ const Body = z
         대부계약: z.string().max(500).optional(),
         변상금: z.string().max(500).optional(),
         민원: z.string().max(500).optional(),
-        기타관리사항: z.string().max(500).optional(),
       })
       .strict()
       .optional(),

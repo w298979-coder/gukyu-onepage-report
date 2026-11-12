@@ -312,6 +312,8 @@ export function ManagementCard({
   const { state } = useReview();
   const result = state.kind === "done" ? state.result : null;
   const list = result ? result.restrictions : restrictions;
+  // 관계법령상 제한이 있는 구역 중 근거 조문이 있는 것만 보인다(조문 없는 문장은 보이지 않는다)
+  const relatedWithBasis = related.items.filter((i) => i.판정 !== "제한 확인되지 않음" && i.citations.length > 0);
 
   const detail = (
     <>
@@ -362,10 +364,26 @@ export function ManagementCard({
         ) : (
           <span className="text-zinc-500">{state.kind === "error" ? "AI 검토를 불러오지 못했습니다" : "AI 검토 중…"}</span>
         )}
-        {related.overall !== "확인된 제한 없음" && (
+        {relatedWithBasis.length > 0 && (
           <span className="mt-0.5 block text-xs">
             <span className={`rounded px-1 py-0.5 font-semibold ${RELATED_STYLE[related.overall]}`}>관계법령 {related.overall}</span>
-            <span className="ml-1 text-zinc-600">{related.items.filter((i) => i.판정 !== "제한 확인되지 않음").map((i) => i.구역.join("·")).join(", ")}</span>
+            {relatedWithBasis.map((i) => (
+              <span key={i.이름} className="ml-1 text-zinc-600">
+                {i.구역.join("·")}
+                <span className="ml-0.5 text-zinc-500">
+                  (
+                  {i.citations.map((c, k) => (
+                    <span key={c.id}>
+                      {k > 0 && ", "}
+                      <a href={c.url} target="_blank" rel="noopener noreferrer" className="text-blue-700 underline">
+                        {c.label}
+                      </a>
+                    </span>
+                  ))}
+                  )
+                </span>
+              </span>
+            ))}
           </span>
         )}
       </p>
