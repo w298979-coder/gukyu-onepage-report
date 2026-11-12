@@ -19,7 +19,7 @@ export default function DetailDialog({
       <button
         type="button"
         onClick={() => ref.current?.showModal()}
-        className="rounded border border-zinc-300 bg-white px-2.5 py-1 text-sm font-medium text-zinc-700 hover:border-blue-600 hover:text-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-300"
+        className="rounded border border-zinc-300 bg-white px-2.5 py-1 text-sm font-medium text-zinc-700 hover:border-blue-600 hover:text-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-300 print:hidden"
       >
         {label}
       </button>

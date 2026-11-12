@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import LookupForm from "./components/LookupForm";
+import PrintButton from "./components/PrintButton";
 import Report from "./components/Report";
 import { findParcels, parseJibun, shortAddress } from "@/lib/jibun";
 import { getParcels } from "@/lib/parcels";
@@ -42,7 +43,9 @@ async function LookupSection({ searchParams }: { searchParams: SearchParams }) {
     <main className="mx-auto flex w-full max-w-[1800px] min-h-0 flex-1 flex-col gap-3 px-4 py-3">
       <header className="flex flex-wrap items-center gap-x-6 gap-y-2">
         <h1 className="text-2xl font-bold tracking-tight">국유재산 원보드리포트</h1>
-        <LookupForm defaultValue={q} />
+        <div className="min-w-0 flex-1 print:hidden">
+          <div className="min-w-0 flex-1 print:hidden"><LookupForm defaultValue={q} /></div>
+        </div>
       </header>
 
       {!selected && (
@@ -88,7 +91,7 @@ async function LookupSection({ searchParams }: { searchParams: SearchParams }) {
       {selected && (
         <>
           <p className="text-sm text-zinc-600">
-            <span className="font-semibold text-zinc-900">{selected.지번}</span> · {selected.상태} · 현재 기준
+            <span className="font-semibold text-zinc-900">{selected.지번}</span> · {selected.상태} · 현재 기준 <PrintButton />
           </p>
           <Report parcel={selected} />
         </>
@@ -117,7 +120,7 @@ async function LookupSection({ searchParams }: { searchParams: SearchParams }) {
 
 export default function Home({ searchParams }: PageProps<"/">) {
   return (
-    <div className="flex min-h-screen flex-col bg-zinc-50 text-zinc-900 xl:h-dvh xl:overflow-hidden">
+    <div className="flex min-h-screen flex-col bg-zinc-50 text-zinc-900 xl:h-dvh xl:overflow-hidden print:h-[194mm] print:min-h-0 print:overflow-hidden">
       <div className="bg-amber-100 px-4 py-1.5 text-center text-sm text-amber-900" role="note">
         가상 데이터 포함 · 출처: 캠코 국유재산포털, 브이월드 · 담당자의 판단을 돕는 참고용입니다
       </div>

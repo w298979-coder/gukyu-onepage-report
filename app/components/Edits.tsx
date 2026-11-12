@@ -123,7 +123,7 @@ function EditButton({ parcelId, item, title, current }: { parcelId: string; item
       <button
         type="button"
         onClick={open}
-        className="rounded border border-violet-300 bg-white px-2.5 py-0.5 text-sm font-medium text-violet-800 hover:bg-violet-50 focus:outline-none focus:ring-2 focus:ring-violet-300"
+        className="rounded border border-violet-300 bg-white px-2.5 py-0.5 text-sm font-medium text-violet-800 hover:bg-violet-50 focus:outline-none focus:ring-2 focus:ring-violet-300 print:hidden"
       >
         수정·추가
       </button>
@@ -147,7 +147,7 @@ function EditButton({ parcelId, item, title, current }: { parcelId: string; item
               onChange={(e) => setText(e.target.value)}
               maxLength={MAX_TEXT}
               rows={5}
-              className="rounded border border-zinc-300 px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-violet-300"
+              className="rounded border border-zinc-300 px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-violet-300 print:hidden"
             />
           </label>
           <label className="flex flex-col gap-1">
@@ -156,7 +156,7 @@ function EditButton({ parcelId, item, title, current }: { parcelId: string; item
               value={name}
               onChange={(e) => setName(e.target.value)}
               maxLength={MAX_NAME}
-              className="rounded border border-zinc-300 px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-violet-300"
+              className="rounded border border-zinc-300 px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-violet-300 print:hidden"
             />
           </label>
           <p className="text-zinc-500">저장하면 지금 값은 &quot;수정&quot; 출처로 표시되고, 이전 내용은 과거이력의 수정 기록에 남습니다.</p>

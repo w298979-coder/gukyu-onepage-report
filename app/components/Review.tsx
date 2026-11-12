@@ -135,7 +135,7 @@ export function VerdictCard() {
           type="button"
           onClick={run}
           disabled={state.kind === "loading"}
-          className="mt-3 rounded bg-blue-700 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-800 disabled:opacity-60"
+          className="mt-3 rounded bg-blue-700 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-800 disabled:opacity-60 print:hidden"
         >
           {state.kind === "loading" ? "검토 중… (최대 30초)" : state.kind === "error" ? "다시 시도" : "AI 검토 실행"}
         </button>
@@ -174,7 +174,7 @@ export function VerdictCard() {
           r.verdictNote ?? "근거 자료에서 확인되지 않았습니다"
         )}
       </p>
-      <button type="button" onClick={run} className="mt-2 text-sm text-blue-700 underline">
+      <button type="button" onClick={run} className="mt-2 text-sm text-blue-700 underline print:hidden">
         다시 검토
       </button>
     </ReportCard>
