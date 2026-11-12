@@ -75,14 +75,19 @@ check("공시지가가 없으면 이력은 해당 없음", h4.basicHistory[0] ==
 const noPast = { ...parcels[0], 과거이용: [] }; // 데이터에는 모든 필지에 이력이 있으므로 이력 없는 필지를 만들어 시험
 check("해당 종류의 이력이 없으면 '해당 없음'", pastHistory(noPast, "무단점유").length === 1 && pastHistory(noPast, "무단점유")[0] === NONE, noPast.지번);
 check("증감률 계산: 100→110은 +10.0%", priceHistory([{ 연도: 2024, 단가: 100 }, { 연도: 2025, 단가: 110 }])[0].includes("+10.0%") && priceHistory([{ 연도: 2024, 단가: 100 }, { 연도: 2025, 단가: 90 }])[0].includes("-10.0%"));
-check("모든 카드에 과거이력 줄이 있다", parcels.every((p) => { const v = buildReport(p); return [v.occupants, v.leases, v.penalties, v.complaints, v.etc].every((c) => c.history.length >= 1); }));
+check("모든 카드에 과거이력 줄이 있다", parcels.every((p) => { const v = buildReport(p); return [v.occupants, v.leases, v.penalties, v.complaints].every((c) => c.history.length >= 1); }));
 
-check("과거이력 건수: 이력이 있으면 1건 이상, 없으면 0", buildReport(by("가양동 177-5")).occupants.historyCount >= 1 && buildReport(by("가양동 576-11")).leases.historyCount >= 1 && h4.basicHistoryCount === 0 && buildReport(by("가양동 177-5")).etc.historyCount >= 1);
+check("과거이력 건수: 이력이 있으면 1건 이상, 없으면 0", buildReport(by("가양동 177-5")).occupants.historyCount >= 1 && buildReport(by("가양동 576-11")).leases.historyCount >= 1 && h4.basicHistoryCount === 0);
 check("29건 모두 변상금·민원 과거이력이 있다", parcels.every((p) => { const v = buildReport(p); return v.penalties.historyCount >= 1 && v.complaints.historyCount >= 1; }));
 
-check("기본 정보에 개별공시지가·용도지역·지구가 들어 있고 기타 관리사항에는 없다", parcels.every((p) => { const v = buildReport(p); return v.basic.some((r) => r.label === "개별공시지가") && v.basic.some((r) => r.label === "용도지역·지구") && v.etc.rows.length === 1 && v.etc.rows[0].label === "관리 메모"; }));
+check("기본 정보에 개별공시지가·용도지역·지구가 들어 있고 기타 관리사항 항목은 없다", parcels.every((p) => { const v = buildReport(p); return v.basic.some((r) => r.label === "개별공시지가") && v.basic.some((r) => r.label === "용도지역·지구") && !("etc" in v); }));
 check("29건 모두 현재 기준 변상금·민원이 있다(가상 데이터)", parcels.every((p) => p.변상금.length >= 1 && p.민원.length >= 1));
 check("전 점유자의 변상금은 점유자 이름 대신 전 점유자로 표시", (() => { const q = parcels.find((p) => p.점유자.length === 0); return buildReport(q).penalties.summary[0].startsWith("전 점유자"); })());
+
+const q = parcels.find((x) => x.지번.endsWith("가양동 174-7"));
+const rq = buildReport(q);
+check("가양동 174-7: 점유자 현○, 대부계약은 해지, 변상금은 해지 이후 부과", q.점유자.length === 1 && q.점유자[0].이름 === "현○" && q.대부계약[0].상태 === "해지" && q.변상금[0].점유자id === q.점유자[0].id && q.변상금[0].부과일 > q.대부계약[0].계약종료일, rq.penalties.summary[0]);
+check("가양동 174-7의 변상금 줄에 점유자 이름이 나온다", rq.penalties.summary[0].startsWith("현○"));
 
 console.log(failed === 0 ? "\n모든 시험 통과" : `\n실패 ${failed}건`);
 process.exit(failed === 0 ? 0 : 1);

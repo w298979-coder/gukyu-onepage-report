@@ -9,6 +9,8 @@ export default function DetailDialog({
   title,
   label = "세부확인",
   source = null,
+  buttonLabel,
+  tone = "normal",
   children,
 }: {
   title: string;
@@ -16,6 +18,10 @@ export default function DetailDialog({
   label?: string;
   /** 창 안 내용의 출처(예: 가상 데이터). 있으면 창 제목 옆에 표시 */
   source?: Source | null;
+  /** 버튼에 적을 글(없으면 label). 예: "과거이력 3건" */
+  buttonLabel?: string;
+  /** 이력이 있으면 "has"(강조), 없으면 "none"(흐리게) */
+  tone?: "normal" | "has" | "none";
   children: ReactNode;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
@@ -24,9 +30,9 @@ export default function DetailDialog({
       <button
         type="button"
         onClick={() => ref.current?.showModal()}
-        className="rounded border border-zinc-300 bg-white px-2.5 py-1 text-sm font-medium text-zinc-700 hover:border-blue-600 hover:text-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-300 print:hidden"
+        className={`rounded border bg-white px-2.5 py-1 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-300 print:hidden ${tone === "has" ? "border-blue-300 text-blue-700 hover:border-blue-600" : tone === "none" ? "border-zinc-200 text-zinc-500 hover:border-zinc-400" : "border-zinc-300 text-zinc-700 hover:border-blue-600 hover:text-blue-700"}`}
       >
-        {label}
+        {buttonLabel ?? label}
       </button>
       <dialog
         ref={ref}

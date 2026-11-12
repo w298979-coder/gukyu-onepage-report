@@ -2,7 +2,7 @@
 import type { ReactNode } from "react";
 import DetailDialog from "./DetailDialog";
 import SourceBadge from "./SourceBadge";
-import { CardFooter, EditBody, EditSource } from "./Edits";
+import { EditBody, EditFooter, EditSource, HistoryButton } from "./Edits";
 import type { EditableItem, Source } from "@/lib/types";
 
 interface Props {
@@ -20,12 +20,16 @@ interface Props {
   historyCount?: number;
   /** 수정·추가가 가능한 항목이면 필지 id·항목·수정 전 원래 내용을 준다. 없으면 수정 버튼을 만들지 않는다. */
   edit?: { parcelId: string; item: EditableItem; original: string };
+  /** 수정·추가 줄의 왼쪽에 붙일 버튼(예: 점유자별 리포트) */
+  footerLeft?: ReactNode;
+  /** 카드 바깥 상자에 더할 클래스(예: 두 줄에 걸치기) */
+  className?: string;
   children: ReactNode;
 }
 
-export default function ReportCard({ title, count, source = null, detail, history, historySource = null, historyCount, edit, children }: Props) {
+export default function ReportCard({ title, count, source = null, detail, history, historySource = null, historyCount, edit, footerLeft, className = "", children }: Props) {
   return (
-    <section className="flex min-h-0 flex-col overflow-hidden rounded-lg border border-zinc-300 bg-white">
+    <section className={`flex min-h-0 flex-col overflow-hidden rounded-lg border border-zinc-300 bg-white ${className}`}>
       <header className="flex items-center justify-between gap-2 border-b border-zinc-200 bg-zinc-50 px-4 py-2.5">
         <h2 className="min-w-0 truncate text-base font-semibold text-zinc-900">
           {title}
@@ -33,11 +37,22 @@ export default function ReportCard({ title, count, source = null, detail, histor
           {edit ? <EditSource parcelId={edit.parcelId} item={edit.item} fallback={source} /> : <SourceBadge source={source} />}
         </h2>
         <div className="flex shrink-0 items-center gap-1.5">
-          {history && (
-            <DetailDialog title={title} label="과거이력" source={historySource}>
-              {history}
-            </DetailDialog>
-          )}
+          {history &&
+            (edit && historyCount !== undefined ? (
+              <HistoryButton parcelId={edit.parcelId} item={edit.item} title={title} baseCount={historyCount} source={historySource}>
+                {history}
+              </HistoryButton>
+            ) : (
+              <DetailDialog
+                title={title}
+                label="과거이력"
+                source={historySource}
+                buttonLabel={historyCount === undefined ? undefined : historyCount > 0 ? `과거이력 ${historyCount}건` : "과거이력 없음"}
+                tone={historyCount === undefined ? "normal" : historyCount > 0 ? "has" : "none"}
+              >
+                {history}
+              </DetailDialog>
+            ))}
           {detail && (
             <DetailDialog title={title} source={source}>
               {detail}
@@ -54,15 +69,7 @@ export default function ReportCard({ title, count, source = null, detail, histor
           children
         )}
       </div>
-      {edit && historyCount !== undefined ? (
-        <CardFooter parcelId={edit.parcelId} item={edit.item} title={title} baseHistoryCount={historyCount} original={edit.original} />
-      ) : (
-        historyCount !== undefined && (
-          <p className={`border-t border-zinc-200 px-4 py-1.5 text-sm ${historyCount > 0 ? "font-medium text-blue-700" : "text-zinc-500"}`}>
-            {historyCount > 0 ? `과거이력 있음 (${historyCount}건)` : "과거이력 없음"}
-          </p>
-        )
-      )}
+      {edit && <EditFooter parcelId={edit.parcelId} item={edit.item} title={title} original={edit.original} left={footerLeft} />}
     </section>
   );
 }
