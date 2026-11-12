@@ -15,8 +15,8 @@ export const PORTAL_STATUSES = [
 ] as const;
 export type PortalStatus = (typeof PORTAL_STATUSES)[number];
 
-/** 재산 구분. 포털 값 그대로. */
-export type PropertyKind = "토지" | "공작물";
+/** 재산 구분. 이번 사이클은 토지만 쓴다(공작물은 대상에서 제외). */
+export type PropertyKind = "토지";
 
 /** 항목 하나 = 값 + 출처 (+ 다른 출처의 값). 값이 없으면 value는 null이고 화면에는 "해당 없음"으로 표시한다. */
 export interface Field<T> {
@@ -79,7 +79,7 @@ export interface PastUse {
   내용: string;
 }
 
-/** 필지 하나의 전체 데이터. data/parcels.json 에 30건이 들어간다. */
+/** 필지 하나의 전체 데이터. data/parcels.json 에 29건이 들어간다. */
 export interface Parcel {
   /** 브이월드 고유번호(PNU). 못 찾으면 포털 정보로 만든 임시 id. */
   id: string;
@@ -88,7 +88,8 @@ export interface Parcel {
   구분: PropertyKind;
   상태: PortalStatus;
 
-  면적: Field<number>; // ㎡
+  /** 국유재산 면적(포털, ㎡)이 value, 브이월드 필지 전체 면적(㎡)이 alt. 포털 값이 없으면 브이월드 값을 value로 쓴다. */
+  면적: Field<number>;
   지목: Field<string>;
   /** 실제지목(현황지목). 브이월드 토지특성정보의 이용상황. */
   실제지목: Field<string>;
