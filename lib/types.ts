@@ -73,7 +73,7 @@ export interface LandPrice {
 
 /** 과거 무단점유·대부계약 이력 (가상 데이터). */
 export interface PastUse {
-  종류: "무단점유" | "대부계약" | "변상금" | "민원";
+  종류: "무단점유" | "대부계약" | "변상금" | "민원" | "관리사항";
   시작일: string | null;
   종료일: string | null;
   내용: string;
@@ -141,6 +141,8 @@ export interface Restriction {
   적용조건: {
     상태?: PortalStatus[];
     지목?: string[];
+    /** 필지 상태·지목 조건과 별개로, 이 현황 항목(변상금·대부계약·점유자·민원)이 있으면 적용한다 */
+    또는항목?: ("변상금" | "대부계약" | "점유자" | "민원")[];
   };
   제한내용: string;
 }

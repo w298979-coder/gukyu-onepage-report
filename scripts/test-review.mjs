@@ -22,7 +22,7 @@ const normal = parcels.find((p) => p.상태 === "대부(입찰)검토재산");
 check("모든 필지에 최소 1개 이상의 제한 조항이 적용된다", parcels.every((p) => sel(p).length >= 1));
 check("조건 없는 조항은 모든 필지에 적용된다", RESTR.filter((r) => !r.적용조건.상태 && !r.적용조건.지목).every((r) => parcels.every((p) => sel(p).includes(r))));
 check("매각제한재산·공공용 지목 필지에만 행정재산 처분 제한(제27조)이 붙는다", sel(limited).some((r) => r.조문id === "국유재산법-제27조") && !sel(normal).some((r) => r.조문id === "국유재산법-제27조"));
-check("상태 조건이 안 맞는 조항은 붙지 않는다", RESTR.filter((r) => r.적용조건.상태 && !r.적용조건.상태.includes(normal.상태)).every((r) => !sel(normal).includes(r)));
+check("상태 조건이 안 맞는 조항은 붙지 않는다", RESTR.filter((r) => r.적용조건.상태 && !r.적용조건.상태.includes(normal.상태) && !r.적용조건.또는항목).every((r) => !sel(normal).includes(r)));
 
 const allowedId = sel(normal)[0].조문id;
 const ok = (o) => ({ verdict: "추가 확인 필요", verdictReasons: [], management: [], cautions: [], ...o });

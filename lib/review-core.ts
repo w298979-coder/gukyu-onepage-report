@@ -13,10 +13,12 @@ export const MAX_ARTICLE_CHARS = 3000;
 /** 필지 상태·지목에 맞는 제한 조항. 적용 조건이 비어 있으면 모든 필지에 적용하고, 조건이 여럿이면 모두 맞아야 한다. */
 export function selectRestrictions(parcel: Parcel, all: Restriction[]): Restriction[] {
   const jimok = parcel.지목.value;
+  const has = (item: "변상금" | "대부계약" | "점유자" | "민원") => parcel[item].length > 0;
   return all.filter((r) => {
-    const c = r.적용조건;
-    if (c.상태 && c.상태.length && !c.상태.includes(parcel.상태)) return false;
-    if (c.지목 && c.지목.length && !(jimok !== null && c.지목.includes(jimok))) return false;
+    const cond = r.적용조건;
+    if (cond.또는항목?.some(has)) return true; // 해당 현황 항목이 있으면 상태와 관계없이 적용
+    if (cond.상태 && cond.상태.length && !cond.상태.includes(parcel.상태)) return false;
+    if (cond.지목 && cond.지목.length && !(jimok !== null && cond.지목.includes(jimok))) return false;
     return true;
   });
 }
@@ -110,7 +112,9 @@ export const SYSTEM_PROMPT = [
   "5. 실제 개인 정보를 추정하거나 적지 않습니다.",
   "6. 한국어로, 문장마다 짧고 분명하게 씁니다.",
   '7. JSON 한 개만 답합니다. 모양: {"verdict": "...", "verdictReasons": [{"text": "...", "articleIds": ["..."]}], "management": [{"text": "...", "articleIds": ["..."]}], "cautions": [{"text": "...", "articleIds": ["..."]}]}',
-  "   verdictReasons는 판정의 이유, management는 이 필지의 종합 관리방안, cautions는 업무 중 놓치기 쉬운 주의사항입니다.",
+  "   verdictReasons는 처분기준상 제한(국유재산법·시행령·시행규칙·세칙·요강·기준)에 따른 매각가능여부 판정의 이유입니다(최대 2개).",
+  "   cautions(주의사항)는 [필지 자료]의 점유자·대부계약·변상금·민원·기타관리사항 현황을 국유재산법령·내규에 비추어 검토해, 담당자가 놓치기 쉬운 점을 항목별로 한 개씩 쓴 것입니다(최대 5개, 문장 앞에 [점유자], [대부계약], [변상금], [민원], [기타] 중 해당 항목을 붙이고, 계약 만료일·납부 상태·미완료 민원처럼 자료에 실제 있는 사실만 근거로 씁니다). 기준일을 참고하되 날짜 계산을 틀리지 않게 합니다.",
+  "   management(관리방안)는 위 검토를 종합한 최종 관리방안으로, 효율적인 순서대로 최대 3개를 한 문장(80자 안팎)씩 간결하게 씁니다. [상태별 관리방향 참고]와 제한 조항을 반영합니다.",
 ].join("\n");
 
 /** 수정 내용(항목별 글)을 길이 제한해 정리한다. 수정자 이름은 받지도, 보내지도 않는다. */
@@ -143,6 +147,9 @@ export function buildUserPrompt(
     변상금: parcel.변상금.map((x) => ({ 부과일: x.부과일, 금액: x.금액, 납부상태: x.납부상태 })),
     민원: parcel.민원.map((c) => ({ 접수일: c.접수일, 처리상태: c.처리상태, 내용: c.내용 })),
     기타관리사항: parcel.기타관리사항.value,
+    개별공시지가: parcel.공시지가.value && parcel.공시지가.value.length ? parcel.공시지가.value.reduce((x, y) => (y.연도 > x.연도 ? y : x)) : null,
+    과거이력: parcel.과거이용.map((u) => ({ 종류: u.종류, 시작일: u.시작일, 종료일: u.종료일, 내용: u.내용 })),
+    기준일: new Date().toISOString().slice(0, 10),
   };
   const ids = [...new Set([...restrictions.map((r) => r.조문id), ...(related?.articleIds ?? [])])].filter((id) => articles.has(id));
   const arts = ids.map((id) => {

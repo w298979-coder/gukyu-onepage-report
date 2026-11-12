@@ -34,7 +34,7 @@ export default function Report({ parcel }: { parcel: Parcel }) {
   return (
     <ReviewProvider parcelId={parcel.id}>
     <div className="grid min-h-0 flex-1 grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4 xl:grid-rows-2 print:grid-cols-4 print:grid-rows-2" aria-label={`${v.title} 종합현황`}>
-      <ReportCard title="기본 정보" detail={<DetailLines lines={v.basicDetail} />}>
+      <ReportCard title="기본 정보" detail={<DetailLines lines={v.basicDetail} />} history={<DetailLines lines={v.basicHistory} />} historySource="브이월드" historyCount={v.basicHistoryCount}>
         <Rows rows={v.basic} />
       </ReportCard>
 
@@ -56,7 +56,7 @@ export default function Report({ parcel }: { parcel: Parcel }) {
         <Lines lines={v.complaints.summary} />
       </ReportCard>
 
-      <ReportCard title="기타 관리사항" detail={<DetailLines lines={v.etc.detail} />} history={<><DetailLines lines={v.etc.history} /><EditHistory parcelId={parcel.id} item="기타관리사항" /></>} historyCount={v.etc.historyCount} historySource="브이월드" edit={{ parcelId: parcel.id, item: "기타관리사항", original: v.etc.detail.join("\n") }}>
+      <ReportCard title="기타 관리사항" detail={<DetailLines lines={v.etc.detail} />} history={<><DetailLines lines={v.etc.history} /><EditHistory parcelId={parcel.id} item="기타관리사항" /></>} historyCount={v.etc.historyCount} historySource="가상" edit={{ parcelId: parcel.id, item: "기타관리사항", original: v.etc.detail.join("\n") }}>
         <Rows rows={v.etc.rows} />
       </ReportCard>
 

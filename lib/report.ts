@@ -36,6 +36,9 @@ export interface ReportView {
   title: string;
   basic: BasicRow[];
   basicDetail: string[];
+  /** 기본 정보 카드의 과거이력(연도별 개별공시지가) */
+  basicHistory: string[];
+  basicHistoryCount: number;
   occupants: ListCard;
   leases: ListCard;
   penalties: ListCard;
@@ -51,7 +54,7 @@ function limit(lines: string[], total: number): string[] {
 }
 
 function ownerName(occ: Occupant[], id: string): string {
-  return occ.find((o) => o.id === id)?.이름 ?? "점유자 미상";
+  return occ.find((o) => o.id === id)?.이름 ?? "전 점유자(미상)";
 }
 
 const leaseLine = (l: Lease, name: string) =>
@@ -88,6 +91,11 @@ export function priceHistory(prices: LandPrice[] | null): string[] {
 /** 과거이력 줄 중 실제 이력의 건수 */
 export const countHistory = (lines: string[]): number => lines.filter((l) => l !== NONE).length;
 
+const latestPrice = (prices: LandPrice[] | null): LandPrice | null =>
+  prices && prices.length ? prices.reduce((a, b) => (b.연도 > a.연도 ? b : a)) : null; // 가장 최근 연도
+const zoneText = (zones: string[] | null): string =>
+  zones && zones.length ? (zones.length > 2 ? `${zones.slice(0, 2).join(", ")} 외 ${zones.length - 2}` : zones.join(", ")) : NONE;
+
 export function buildReport(p: Parcel): ReportView {
   const area = p.면적;
   const basic: BasicRow[] = [
@@ -111,12 +119,28 @@ export function buildReport(p: Parcel): ReportView {
       source: p.실제지목.value === null ? null : p.실제지목.source,
       note: p.실제지목.value === null ? "브이월드에 토지특성 정보가 없음" : undefined,
     },
+    (() => {
+      const latest = latestPrice(p.공시지가.value);
+      return {
+        label: "개별공시지가",
+        value: latest ? `${latest.단가.toLocaleString("ko-KR")}원/㎡ (${latest.연도}년)` : NONE,
+        source: latest ? p.공시지가.source : null,
+      } as BasicRow;
+    })(),
+    {
+      label: "용도지역·지구",
+      value: zoneText(p.용도지역.value),
+      source: p.용도지역.value && p.용도지역.value.length ? p.용도지역.source : null,
+    },
   ];
 
   const basicDetail = [
     "면적은 포털의 국유재산 면적을 기본으로 보여주고, 브이월드의 필지 전체 면적과 다르면 함께 표시합니다.",
     "지목은 브이월드를 기준으로 하고, 실제지목은 브이월드 토지특성정보의 이용상황입니다.",
     "소재지·구분·상태는 캠코 국유재산포털 값입니다.",
+    "개별공시지가와 용도지역·지구(지정내역)는 브이월드 값이며, 과거이력 버튼에서 연도별 개별공시지가를 볼 수 있습니다.",
+    `개별공시지가(최신): ${basic.find((r) => r.label === "개별공시지가")?.value}`,
+    `용도지역·지구 전체: ${p.용도지역.value && p.용도지역.value.length ? p.용도지역.value.join(", ") : NONE}`,
     ...basic.filter((r) => r.note).map((r) => `${r.label}: ${r.note}`),
   ];
 
@@ -174,37 +198,24 @@ export function buildReport(p: Parcel): ReportView {
     source: p.민원.length === 0 ? null : "가상",
   };
 
-  // 기타 관리사항: 공시지가(최신), 용도지역, 관리 메모
+  // 기타 관리사항: 관리 메모(공시지가·용도지역은 기본 정보로 옮김)
   const prices = p.공시지가.value;
-  const latest = prices && prices.length ? prices.reduce((a, b) => (b.연도 > a.연도 ? b : a)) : null; // 가장 최근 연도
-  const zones = p.용도지역.value;
   const etcRows: BasicRow[] = [
-    {
-      label: "개별공시지가",
-      value: latest ? `${latest.단가.toLocaleString("ko-KR")}원/㎡ (${latest.연도}년)` : NONE,
-      source: latest ? p.공시지가.source : null,
-    },
-    {
-      label: "용도지역·지구",
-      value: zones && zones.length ? (zones.length > 2 ? `${zones.slice(0, 2).join(", ")} 외 ${zones.length - 2}` : zones.join(", ")) : NONE,
-      source: zones && zones.length ? p.용도지역.source : null,
-    },
     { label: "관리 메모", value: text(p.기타관리사항.value), source: p.기타관리사항.value ? p.기타관리사항.source : null },
   ];
-  const etcDetail = [
-    `개별공시지가(최신): ${etcRows[0].value}`,
-    `용도지역·지구 전체: ${zones && zones.length ? zones.join(", ") : NONE}`,
-    `관리 메모: ${etcRows[2].value}`,
-  ];
+  const etcDetail = [`관리 메모: ${etcRows[0].value}`];
+  const etcPast = pastHistory(p, "관리사항");
 
   return {
     title: p.지번,
     basic,
     basicDetail,
+    basicHistory: priceHistory(prices),
+    basicHistoryCount: countHistory(priceHistory(prices)),
     occupants,
     leases,
     penalties,
     complaints,
-    etc: { rows: etcRows, detail: etcDetail, history: [...priceHistory(prices)], historyCount: countHistory(priceHistory(prices)) },
+    etc: { rows: etcRows, detail: etcDetail, history: etcPast, historyCount: countHistory(etcPast) },
   };
 }

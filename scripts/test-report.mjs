@@ -67,18 +67,22 @@ check("무단점유 과거이력: 시작일과 '현재까지' 표시", h1.occupa
 const h2 = buildReport(by("가양동 576-11")); // 대부계약 만료 후 무단점유 전환
 check("대부계약 과거이력이 나온다", h2.leases.history[0] !== NONE && h2.leases.history[0].includes("만료"), h2.leases.history[0]);
 const h3 = buildReport(by("가양동 174-59"));
-check("공시지가 이력: 최근 연도가 먼저, 전년 대비 증감률 표시", h3.etc.history[0].startsWith("2026년") && /전년 대비 [+-]\d/.test(h3.etc.history[0]), h3.etc.history[0]);
-check("공시지가 이력의 마지막(가장 오래된 해)에는 증감률이 없다", !h3.etc.history.at(-1).includes("전년 대비"), h3.etc.history.at(-1));
-check("공시지가 이력이 연도 수만큼 나온다", h3.etc.history.length === 16, String(h3.etc.history.length));
+check("공시지가 이력: 최근 연도가 먼저, 전년 대비 증감률 표시", h3.basicHistory[0].startsWith("2026년") && /전년 대비 [+-]\d/.test(h3.basicHistory[0]), h3.basicHistory[0]);
+check("공시지가 이력의 마지막(가장 오래된 해)에는 증감률이 없다", !h3.basicHistory.at(-1).includes("전년 대비"), h3.basicHistory.at(-1));
+check("공시지가 이력이 연도 수만큼 나온다", h3.basicHistory.length === 16, String(h3.basicHistory.length));
 const h4 = buildReport(by("가양동 598-11")); // 공시지가 없음
-check("공시지가가 없으면 이력은 해당 없음", h4.etc.history[0] === NONE);
+check("공시지가가 없으면 이력은 해당 없음", h4.basicHistory[0] === NONE);
 const noPast = { ...parcels[0], 과거이용: [] }; // 데이터에는 모든 필지에 이력이 있으므로 이력 없는 필지를 만들어 시험
 check("해당 종류의 이력이 없으면 '해당 없음'", pastHistory(noPast, "무단점유").length === 1 && pastHistory(noPast, "무단점유")[0] === NONE, noPast.지번);
 check("증감률 계산: 100→110은 +10.0%", priceHistory([{ 연도: 2024, 단가: 100 }, { 연도: 2025, 단가: 110 }])[0].includes("+10.0%") && priceHistory([{ 연도: 2024, 단가: 100 }, { 연도: 2025, 단가: 90 }])[0].includes("-10.0%"));
 check("모든 카드에 과거이력 줄이 있다", parcels.every((p) => { const v = buildReport(p); return [v.occupants, v.leases, v.penalties, v.complaints, v.etc].every((c) => c.history.length >= 1); }));
 
-check("과거이력 건수: 이력이 있으면 1건 이상, 없으면 0", buildReport(by("가양동 177-5")).occupants.historyCount >= 1 && buildReport(by("가양동 576-11")).leases.historyCount >= 1 && h4.etc.historyCount === 0);
+check("과거이력 건수: 이력이 있으면 1건 이상, 없으면 0", buildReport(by("가양동 177-5")).occupants.historyCount >= 1 && buildReport(by("가양동 576-11")).leases.historyCount >= 1 && h4.basicHistoryCount === 0 && buildReport(by("가양동 177-5")).etc.historyCount >= 1);
 check("29건 모두 변상금·민원 과거이력이 있다", parcels.every((p) => { const v = buildReport(p); return v.penalties.historyCount >= 1 && v.complaints.historyCount >= 1; }));
+
+check("기본 정보에 개별공시지가·용도지역·지구가 들어 있고 기타 관리사항에는 없다", parcels.every((p) => { const v = buildReport(p); return v.basic.some((r) => r.label === "개별공시지가") && v.basic.some((r) => r.label === "용도지역·지구") && v.etc.rows.length === 1 && v.etc.rows[0].label === "관리 메모"; }));
+check("29건 모두 현재 기준 변상금·민원이 있다(가상 데이터)", parcels.every((p) => p.변상금.length >= 1 && p.민원.length >= 1));
+check("전 점유자의 변상금은 점유자 이름 대신 전 점유자로 표시", (() => { const q = parcels.find((p) => p.점유자.length === 0); return buildReport(q).penalties.summary[0].startsWith("전 점유자"); })());
 
 console.log(failed === 0 ? "\n모든 시험 통과" : `\n실패 ${failed}건`);
 process.exit(failed === 0 ? 0 : 1);

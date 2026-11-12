@@ -295,71 +295,86 @@ export function VerdictCard({ related }: { related: RelatedResult }) {
   );
 }
 
-/** 대부·처분 제한사항 / 관리방안 칸. 제한 조항은 서버가 고른 것을 처음부터 보여준다. */
+/** 관리방안 칸: 점유자·대부계약·변상금·민원·기타 관리사항 현황을 법령·내규에 비추어 검토한 주의사항과, 종합한 간결한 관리방안 */
 export function ManagementCard({ restrictions, missing }: { restrictions: RestrictionView[]; missing: { 문서명: string; 사유: string }[] }) {
   const { state } = useReview();
   const result = state.kind === "done" ? state.result : null;
   const list = result ? result.restrictions : restrictions;
-  const count = (k: RestrictionView["대상"]) => list.filter((r) => r.대상 === k).length;
-  const mgmt = result?.management[0];
+
+  const detail = (
+    <>
+      <p className="mb-3 text-zinc-600">
+        점유자·대부계약·변상금·민원·기타 관리사항 현황을 국유재산법령·내규에 비추어 검토한 결과입니다. {REFERENCE_NOTE}
+      </p>
+      {result ? (
+        <>
+          <SentenceList title="주의사항" items={result.cautions} />
+          <SentenceList title="관리방안 (효율적인 순서)" items={result.management} />
+        </>
+      ) : (
+        <p className="mb-3 text-zinc-500">주의사항과 관리방안은 AI 검토가 끝나면 표시됩니다.</p>
+      )}
+      <div className="mt-4 border-t border-zinc-200 pt-3">
+        <p className="mb-1 font-medium">이 필지에 적용되는 대부·처분·관리 제한 조항 ({list.length}건)</p>
+        <p className="mb-2 text-xs text-zinc-600">필지 상태·지목·현황 항목에 맞는 조항을 앱이 저장된 법령·내규에서 고른 것입니다. 요약이므로 업무에 쓰기 전에 원문을 확인하세요.</p>
+        <RestrictionList items={list} />
+      </div>
+      <div className="mt-4 rounded bg-zinc-50 px-3 py-2">
+        <p className="mb-1 font-medium">근거 자료에서 확인하지 못한 문서 ({missing.length}건)</p>
+        {missing.length === 0 ? (
+          <p className="text-zinc-500">해당 없음</p>
+        ) : (
+          <ul className="flex flex-col gap-1">
+            {missing.map((d) => (
+              <li key={d.문서명} className="break-words">
+                {d.문서명} — <span className="text-zinc-600">{d.사유}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </>
+  );
 
   return (
-    <ReportCard
-      title="대부·처분 제한사항 / 관리방안"
-      count={`제한 ${list.length}건`}
-      detail={
-        <>
-          <p className="mb-3 text-zinc-600">제한사항은 이 필지의 상태·지목에 맞는 조항을 앱이 저장된 법령·내규에서 고른 것입니다. 요약이므로 업무에 쓰기 전에 원문을 확인하세요.</p>
-          <p className="mb-1 font-medium">대부·처분 제한사항 ({list.length}건)</p>
-          <div className="mb-4">
-            <RestrictionList items={list} />
-          </div>
-          <div className="mb-4 rounded bg-zinc-50 px-3 py-2">
-            <p className="mb-1 font-medium">근거 자료에서 확인하지 못한 문서 ({missing.length}건)</p>
-            {missing.length === 0 ? (
-              <p className="text-zinc-500">해당 없음</p>
+    <ReportCard title="관리방안" count={result ? `주의 ${result.cautions.length}건` : undefined} detail={detail}>
+      {result ? (
+        <div className="flex flex-col gap-2 text-sm">
+          <div>
+            <p className="font-semibold text-zinc-700">주의사항</p>
+            {result.cautions.length === 0 ? (
+              <p className="text-zinc-500">근거 자료에서 확인되지 않았습니다</p>
             ) : (
-              <ul className="flex flex-col gap-1">
-                {missing.map((d) => (
-                  <li key={d.문서명} className="break-words">
-                    {d.문서명} — <span className="text-zinc-600">{d.사유}</span>
+              <ul className="mt-0.5 flex flex-col gap-1">
+                {result.cautions.slice(0, 3).map((c, i) => (
+                  <li key={i} className="line-clamp-2 break-words">
+                    {c.text}
+                    <Cites s={c} />
                   </li>
                 ))}
+                {result.cautions.length > 3 && <li className="text-zinc-500">외 {result.cautions.length - 3}건 (세부확인)</li>}
               </ul>
             )}
           </div>
-          {result ? (
-            <>
-              <SentenceList title="종합 관리방안 (AI 검토 · 참고용)" items={result.management} />
-              <SentenceList title="주의사항 (AI 검토 · 참고용)" items={result.cautions} />
-            </>
-          ) : (
-            <p className="text-zinc-500">관리방안과 주의사항은 AI 검토가 끝나면 표시됩니다.</p>
-          )}
-        </>
-      }
-    >
-      <p className="text-zinc-700">
-        대부 {count("대부")}건 · 처분 {count("처분")}건 · 관리 {count("관리")}건
-      </p>
-      <ul className="mt-1.5 flex flex-col gap-1">
-        {list.slice(0, 2).map((r, i) => (
-          <li key={i} className="line-clamp-2 break-words">
-            <span className="mr-1 rounded bg-zinc-100 px-1.5 py-0.5 text-xs">{r.대상}</span>
-            {r.제한내용}
-            <span className="ml-1 text-xs text-zinc-500">[{r.citation.label}]</span>
-          </li>
-        ))}
-      </ul>
-      {result ? (
-        <p className="mt-2 line-clamp-2 break-words text-zinc-800">
-          <span className="font-medium">관리방안:</span> {mgmt ? mgmt.text : "근거 자료에서 확인되지 않았습니다"}
-          {mgmt && <Cites s={mgmt} />}
-          {result.cautions.length > 0 && <span className="text-zinc-500"> · 주의사항 {result.cautions.length}건</span>}
-        </p>
+          <div className="border-t border-zinc-200 pt-2">
+            <p className="font-semibold text-zinc-700">관리방안</p>
+            {result.management.length === 0 ? (
+              <p className="text-zinc-500">근거 자료에서 확인되지 않았습니다</p>
+            ) : (
+              <ol className="mt-0.5 flex list-decimal flex-col gap-1 pl-4">
+                {result.management.slice(0, 3).map((m, i) => (
+                  <li key={i} className="line-clamp-2 break-words">
+                    {m.text}
+                    <Cites s={m} />
+                  </li>
+                ))}
+              </ol>
+            )}
+          </div>
+        </div>
       ) : (
-        <p className="mt-2 text-zinc-500">
-          {state.kind === "error" ? "관리방안·주의사항: AI 검토를 불러오지 못했습니다" : "관리방안·주의사항: AI 검토 중…"}
+        <p className="text-zinc-600">
+          {state.kind === "error" ? "주의사항·관리방안을 불러오지 못했습니다. 적용되는 제한 조항은 세부확인에서 볼 수 있습니다." : "점유자·대부계약·변상금·민원·기타 관리사항 현황을 법령·내규에 비추어 AI가 검토하는 중입니다…"}
         </p>
       )}
     </ReportCard>
