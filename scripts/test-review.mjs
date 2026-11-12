@@ -34,7 +34,7 @@ check("실제 있는 조문을 인용한 문장만 보인다", r.verdictReasons.
 check("없는 조문·인용 없는 문장은 숨기고 개수를 센다", r.hidden === 2, String(r.hidden));
 check("섞인 인용에서 있는 것만 남고 중복은 하나로", r.cautions[0].citations.length === 1 && r.cautions[0].citations[0].id === allowedId);
 check("조문 이름은 AI가 아니라 저장된 자료에서 만든다", r.verdictReasons[0].citations[0].label === `${articles.get(allowedId).문서명} ${articles.get(allowedId).조문번호}`, r.verdictReasons[0].citations[0].label);
-check("근거가 있는 '가능'은 그대로", r.verdict === "가능" && r.verdictNote === null);
+check("근거가 있는 '가능'은 그대로 두되, 처분 제한 조항 확인 안내를 붙인다", r.verdict === "가능" && r.verdictNote !== null && r.verdictNote.includes("처분 제한 조항"), r.verdictNote);
 
 // 저장돼 있어도 이 필지에 적용되지 않은 조문은 인용할 수 없다
 const notAllowed = RESTR.find((x) => !sel(normal).some((y) => y.조문id === x.조문id))?.조문id;
