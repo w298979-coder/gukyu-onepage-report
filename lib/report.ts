@@ -1,6 +1,6 @@
 // Design Ref: §2 — 필지 한 건을 리포트 화면에 쓸 글(문자열)로 바꾼다. 화면(컴포넌트)과 분리해 시험하기 쉽게 한다.
 // Plan: 작업 6. 값이 없으면 빈칸이 아니라 "해당 없음", 면적은 ㎡, 출처(브이월드/포털/가상/수정)를 함께 보여준다.
-import type { Complaint, Lease, Occupant, Parcel, Penalty, Source } from "./types";
+import type { Complaint, LandPrice, Lease, Occupant, Parcel, PastUse, Penalty, Source } from "./types";
 
 export const NONE = "해당 없음";
 
@@ -25,6 +25,8 @@ export interface ListCard {
   count: string;
   summary: string[];
   detail: string[];
+  /** "과거이력" 버튼에서 보여 줄 줄들. 이력이 없으면 ["해당 없음"] */
+  history: string[];
   source: Source | null;
 }
 
@@ -36,7 +38,7 @@ export interface ReportView {
   leases: ListCard;
   penalties: ListCard;
   complaints: ListCard;
-  etc: { rows: BasicRow[]; detail: string[] };
+  etc: { rows: BasicRow[]; detail: string[]; history: string[] };
 }
 
 const MAX_SUMMARY = 3;
@@ -54,6 +56,35 @@ const leaseLine = (l: Lease, name: string) =>
   `${name} · ${l.상태} · ${fmtDate(l.계약시작일)} ~ ${fmtDate(l.계약종료일)} · 연 사용료 ${fmtWon(l.연사용료)}`;
 const penaltyLine = (x: Penalty, name: string) => `${name} · ${fmtDate(x.부과일)} 부과 · ${fmtWon(x.금액)} · ${x.납부상태}`;
 const complaintLine = (c: Complaint) => `${fmtDate(c.접수일)} · ${c.처리상태} · ${c.내용}`;
+
+/** 과거 무단점유·대부계약 이력 한 줄 (종료일이 없으면 현재까지 이어지는 것) */
+const pastLine = (u: PastUse) => `${fmtDate(u.시작일)} ~ ${u.종료일 ? u.종료일 : "현재까지"} · ${u.내용}`;
+
+/** 해당 종류의 과거 이력을 최근 시작일 순으로 정리한다. 없으면 ["해당 없음"] */
+export function pastHistory(p: Parcel, kind: PastUse["종류"]): string[] {
+  const rows = p.과거이용.filter((u) => u.종류 === kind).sort((a, b) => (b.시작일 ?? "").localeCompare(a.시작일 ?? ""));
+  return rows.length ? rows.map(pastLine) : [NONE];
+}
+
+/** 연도별 개별공시지가 이력(최근 연도 먼저). 전년 대비 증감률을 함께 적는다. 없으면 ["해당 없음"] */
+export function priceHistory(prices: LandPrice[] | null): string[] {
+  if (!prices || prices.length === 0) return [NONE];
+  const sorted = [...prices].sort((a, b) => a.연도 - b.연도);
+  return sorted
+    .map((cur, i) => {
+      const prev = sorted[i - 1];
+      let change = "";
+      if (prev && prev.단가 > 0) {
+        const rate = ((cur.단가 - prev.단가) / prev.단가) * 100;
+        change = ` (전년 대비 ${rate >= 0 ? "+" : ""}${rate.toFixed(1)}%)`;
+      }
+      return `${cur.연도}년 · ${cur.단가.toLocaleString("ko-KR")}원/㎡${change}`;
+    })
+    .reverse();
+}
+
+/** 수정 기록은 담당자가 수정한 뒤(작업 8) 브라우저 저장소에서 읽어 이 자리에 붙인다. */
+export const NO_EDIT_RECORD = "수정 기록: 해당 없음";
 
 export function buildReport(p: Parcel): ReportView {
   const area = p.면적;
@@ -104,6 +135,7 @@ export function buildReport(p: Parcel): ReportView {
         ...(mine.length ? mine.map((l) => `  - 대부계약: ${leaseLine(l, o.이름)}`) : ["  - 대부계약: 없음"]),
       ];
     }),
+    history: [...pastHistory(p, "무단점유"), NO_EDIT_RECORD],
     source: p.점유자.length === 0 ? null : "가상",
   };
 
@@ -112,6 +144,7 @@ export function buildReport(p: Parcel): ReportView {
     count: p.대부계약.length === 0 ? NONE : `${p.대부계약.length}건`,
     summary: limit(leaseLines, p.대부계약.length),
     detail: p.대부계약.length === 0 ? [NONE] : leaseLines,
+    history: [...pastHistory(p, "대부계약"), NO_EDIT_RECORD],
     source: p.대부계약.length === 0 ? null : "가상",
   };
 
@@ -121,6 +154,7 @@ export function buildReport(p: Parcel): ReportView {
     count: p.변상금.length === 0 ? NONE : `${p.변상금.length}건${unpaid ? ` · 미완납 ${unpaid}` : ""}`,
     summary: limit(penLines, p.변상금.length),
     detail: p.변상금.length === 0 ? [NONE] : penLines,
+    history: [NONE, NO_EDIT_RECORD],
     source: p.변상금.length === 0 ? null : "가상",
   };
 
@@ -130,6 +164,7 @@ export function buildReport(p: Parcel): ReportView {
     count: p.민원.length === 0 ? NONE : `${p.민원.length}건${open ? ` · 미완료 ${open}` : ""}`,
     summary: limit(cLines, p.민원.length),
     detail: p.민원.length === 0 ? [NONE] : cLines,
+    history: [NONE, NO_EDIT_RECORD],
     source: p.민원.length === 0 ? null : "가상",
   };
 
@@ -164,6 +199,6 @@ export function buildReport(p: Parcel): ReportView {
     leases,
     penalties,
     complaints,
-    etc: { rows: etcRows, detail: etcDetail },
+    etc: { rows: etcRows, detail: etcDetail, history: [...priceHistory(prices), NO_EDIT_RECORD] },
   };
 }
