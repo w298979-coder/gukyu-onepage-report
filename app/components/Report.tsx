@@ -114,7 +114,7 @@ export default function Report({ parcel }: { parcel: Parcel }) {
       </ReportCard>
 
       <ReportCard title="민원 처리 현황" count={v.complaints.count} source={v.complaints.source} detail={<DetailLines lines={v.complaints.detail} />} history={<><DetailLines lines={v.complaints.history} /><EditHistory parcelId={parcel.id} item="민원" /></>} historyCount={v.complaints.historyCount} historySource="가상" edit={{ parcelId: parcel.id, item: "민원", original: v.complaints.detail.join("\n") }}>
-        <Lines lines={v.complaints.summary} />
+        <Lines lines={v.complaints.summary} oneLine />
       </ReportCard>
 
       <ManagementCard restrictions={restrictions} missing={MISSING_DOCS} memo={parcel.기타관리사항.value} related={related} />

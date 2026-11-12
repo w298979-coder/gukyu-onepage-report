@@ -1,7 +1,7 @@
 // 리포트용 글(lib/report.ts) 시험. 실행: node --no-warnings scripts/test-report.mjs
 // 29건 모두에서 "undefined"·"null"·"NaN" 같은 깨진 값이 화면 글에 섞이지 않는지, 값이 없을 때 "해당 없음"이 나오는지 확인한다.
 import fs from "node:fs";
-import { buildReport, NONE, fmtArea, fmtWon, pastHistory, priceHistory } from "../lib/report.ts";
+import { complaintSummaryLine, oneLine, buildReport, NONE, fmtArea, fmtWon, pastHistory, priceHistory } from "../lib/report.ts";
 
 const parcels = JSON.parse(fs.readFileSync("data/parcels.json", "utf8")).parcels;
 let failed = 0;
@@ -89,7 +89,10 @@ const rq = buildReport(q);
 check("가양동 174-7: 점유자 현빈, 대부계약은 해지, 변상금은 해지 이후 부과", q.점유자.length === 1 && q.점유자[0].이름 === "현빈" && q.대부계약[0].상태 === "해지" && q.변상금[0].점유자id === q.점유자[0].id && q.변상금[0].부과일 > q.대부계약[0].계약종료일, rq.penalties.summary[0]);
 check("가양동 174-7의 변상금 줄에 점유자 이름이 나온다", rq.penalties.summary[0].startsWith("현빈"));
 
-check("모든 점유자·민원인 이름이 전체 이름(가려지지 않음)이고 민원 줄에 민원인이 나온다", parcels.every((p) => p.점유자.every((o) => !o.이름.includes("○") && o.이름.length >= 2) && p.민원.every((c) => c.민원인 && !c.민원인.includes("○"))) && parcels.every((p) => buildReport(p).complaints.summary.every((l) => l === NONE || l.includes("민원인 ") || l.startsWith("외 "))));
+check("모든 점유자·민원인 이름이 전체 이름(가려지지 않음)이고 민원 줄에 민원인이 나온다", parcels.every((p) => p.점유자.every((o) => !o.이름.includes("○") && o.이름.length >= 2) && p.민원.every((c) => c.민원인 && !c.민원인.includes("○"))) && parcels.every((p) => buildReport(p).complaints.detail.every((l) => l === NONE || l.includes("민원인 ")) && buildReport(p).complaints.summary.every((l) => l === NONE || l.startsWith("외 ") || (l.split(" · ").length === 4 && !l.includes("\n")))));
+
+check("oneLine: 긴 글은 …으로 줄이고 공백을 정리", oneLine("가".repeat(40), 10) === "가".repeat(9) + "…" && oneLine("  a   b \n c ") === "a b c");
+check("민원 한 줄 요약은 내용·민원인·접수일·처리상태 순서", (() => { const q = parcels.find((x) => x.민원.length); const c = q.민원[0]; return complaintSummaryLine(c) === `${oneLine(c.내용)} · ${c.민원인} · ${c.접수일} · ${c.처리상태}`; })());
 
 console.log(failed === 0 ? "\n모든 시험 통과" : `\n실패 ${failed}건`);
 process.exit(failed === 0 ? 0 : 1);
