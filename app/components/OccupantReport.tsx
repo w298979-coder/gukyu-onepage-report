@@ -4,7 +4,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import ReportCard, { DetailLines } from "./ReportCard";
 import SourceBadge from "./SourceBadge";
-import { fmtArea, fmtDate, fmtWon, NONE } from "@/lib/report";
+import { fmtArea, fmtDate, fmtWon, NONE, oneLine } from "@/lib/report";
 import { shortLot } from "@/lib/occupant-core";
 import type { CitedSentence, OccupantReportView } from "@/lib/occupants";
 
@@ -47,12 +47,12 @@ interface Item {
   /** 앞에 링크로 만들 글(필지 지번) */
   link?: string;
 }
-function ItemList({ items, max = 4, emptyText = NONE }: { items: Item[]; max?: number; emptyText?: string }) {
+function ItemList({ items, max = 4, emptyText = NONE, single = false }: { items: Item[]; max?: number; emptyText?: string; single?: boolean }) {
   if (items.length === 0) return <p className="text-zinc-500">{emptyText}</p>;
   return (
     <ul className="flex flex-col gap-1.5">
       {items.slice(0, max).map((it) => (
-        <li key={it.key} className="line-clamp-3 break-words">
+        <li key={it.key} className={single ? "truncate text-sm" : "line-clamp-3 break-words"} title={single ? `${it.link ? shortLot(it.link) : ""}${it.text}` : undefined}>
           <Chip tone={it.tone}>{it.chip}</Chip>
           {it.link ? (
             <>
@@ -122,8 +122,14 @@ export default function OccupantReport({ report }: { report: OccupantReportView 
       tone: c.처리상태 === "접수" ? "red" : c.처리상태 === "처리중" ? "amber" : "green",
       chip: c.처리상태 === "완료" ? "처리완료" : c.처리상태,
       link: lot,
-      text: ` · ${fmtDate(c.접수일)} · 민원인 ${c.민원인} · ${c.내용}`,
+      text: ` · ${oneLine(c.내용, 16)} · ${c.민원인}`,
     }));
+  const fullComplaints = (() => {
+    const all = rows
+      .flatMap((r) => r.parcel.민원.map((c) => ({ lot: r.parcel.지번, c })))
+      .sort((a, b) => cRank[a.c.처리상태] - cRank[b.c.처리상태] || byDateDesc(a.c.접수일, b.c.접수일));
+    return all.length === 0 ? [NONE] : all.map(({ lot, c }) => `[${c.처리상태 === "완료" ? "처리완료" : c.처리상태}] ${shortLot(lot)} · ${fmtDate(c.접수일)} · 민원인 ${c.민원인} · ${c.내용}`);
+  })();
   const openComplaints = complaints.filter((c) => c.chip !== "처리완료").length;
 
   return (
@@ -173,8 +179,8 @@ export default function OccupantReport({ report }: { report: OccupantReportView 
         <ItemList items={pens} />
       </ReportCard>
 
-      <ReportCard title="민원 (점유 필지)" count={complaints.length ? `${complaints.length}건${openComplaints ? ` · 미완료 ${openComplaints}` : ""}` : NONE} source={complaints.length ? "가상" : null} detail={<DetailLines lines={lines(complaints)} />}>
-        <ItemList items={complaints} />
+      <ReportCard title="민원 (점유 필지)" count={complaints.length ? `${complaints.length}건${openComplaints ? ` · 미완료 ${openComplaints}` : ""}` : NONE} source={complaints.length ? "가상" : null} detail={<DetailLines lines={fullComplaints} />}>
+        <ItemList items={complaints} single />
       </ReportCard>
 
       <ReportCard title="주의사항" count={`${report.cautions.length}건`}>

@@ -75,11 +75,11 @@ export default function ReportCard({ title, count, source = null, detail, histor
 }
 
 /** 줄 목록(한 줄 요약) */
-export function Lines({ lines }: { lines: string[] }) {
+export function Lines({ lines, oneLine = false }: { lines: string[]; oneLine?: boolean }) {
   return (
     <ul className="flex flex-col gap-1">
       {lines.map((l, i) => (
-        <li key={i} className={l === "해당 없음" ? "text-zinc-500" : "line-clamp-3 break-words"}>
+        <li key={i} className={l === "해당 없음" ? "text-zinc-500" : oneLine ? "truncate" : "line-clamp-3 break-words"} title={oneLine ? l : undefined}>
           {l}
         </li>
       ))}

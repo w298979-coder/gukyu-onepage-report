@@ -59,6 +59,14 @@ function ownerName(occ: Occupant[], id: string): string {
 const leaseLine = (l: Lease, name: string) =>
   `${name} · ${l.상태} · ${fmtDate(l.계약시작일)} ~ ${fmtDate(l.계약종료일)} · 연 사용료 ${fmtWon(l.연사용료)}`;
 const penaltyLine = (x: Penalty, name: string) => `${name} · ${fmtDate(x.부과일)} 부과 · ${fmtWon(x.금액)} · ${x.납부상태}`;
+/** 한 줄 요약용으로 글을 줄인다(공백 정리, 길면 …) */
+export function oneLine(text: string, max = 24): string {
+  const t = text.replace(/\s+/g, " ").trim();
+  return t.length > max ? `${t.slice(0, max - 1)}…` : t;
+}
+/** 민원 한 줄 요약: 내용을 앞에 두고 민원인·접수일·처리상태를 뒤에 붙인다 */
+export const complaintSummaryLine = (c: Complaint) => `${oneLine(c.내용)} · ${c.민원인} · ${fmtDate(c.접수일)} · ${c.처리상태}`;
+/** 세부확인용 전체 줄 */
 const complaintLine = (c: Complaint) => `${fmtDate(c.접수일)} · ${c.처리상태} · 민원인 ${c.민원인} · ${c.내용}`;
 
 /** 과거 무단점유·대부계약 이력 한 줄 (종료일이 없으면 현재까지 이어지는 것) */
@@ -190,7 +198,7 @@ export function buildReport(p: Parcel): ReportView {
   const open = p.민원.filter((c) => c.처리상태 !== "완료").length;
   const complaints: ListCard = {
     count: p.민원.length === 0 ? NONE : `${p.민원.length}건${open ? ` · 미완료 ${open}` : ""}`,
-    summary: limit(cLines, p.민원.length),
+    summary: limit(p.민원.map(complaintSummaryLine), p.민원.length),
     detail: p.민원.length === 0 ? [NONE] : cLines,
     history: [...pastHistory(p, "민원")],
     historyCount: countHistory(pastHistory(p, "민원")),
