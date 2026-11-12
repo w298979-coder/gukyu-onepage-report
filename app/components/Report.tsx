@@ -31,7 +31,7 @@ export default function Report({ parcel }: { parcel: Parcel }) {
   const restrictions = restrictionViews(selectRestrictions(parcel, RESTRICTIONS), ARTICLES);
   return (
     <ReviewProvider parcelId={parcel.id}>
-    <div className="grid min-h-0 flex-1 grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4 xl:grid-rows-2" aria-label={`${v.title} 종합현황`}>
+    <div className="grid min-h-0 flex-1 grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4 xl:grid-rows-2 print:grid-cols-4 print:grid-rows-2" aria-label={`${v.title} 종합현황`}>
       <ReportCard title="기본 정보" detail={<DetailLines lines={v.basicDetail} />}>
         <Rows rows={v.basic} />
       </ReportCard>

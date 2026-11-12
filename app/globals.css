@@ -24,3 +24,19 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* 문서 출력: A4 가로 한 장. 버튼·입력칸은 숨기고(컴포넌트의 print:hidden), 글자 크기는 rem 기준이라 루트 글자 크기만 줄여 한 장에 맞춘다. */
+@page {
+  size: A4 landscape;
+  margin: 8mm;
+}
+@media print {
+  html {
+    font-size: 9px;
+  }
+  body {
+    background: #fff;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}
