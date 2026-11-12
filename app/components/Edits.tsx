@@ -104,7 +104,7 @@ export function HistoryButton({
 export function EditFooter({ parcelId, item, title, original, left }: { parcelId: string; item: EditableItem; title: string; original: string; left?: ReactNode }) {
   const edits = useEdits(parcelId, item);
   return (
-    <div className="flex items-center justify-between gap-2 border-t border-zinc-200 px-4 py-1.5 text-sm">
+    <div className="flex items-center justify-between gap-2 border-t border-zinc-200 px-4 py-1.5 text-sm print:hidden">
       <div>{left}</div>
       <EditButton parcelId={parcelId} item={item} title={title} current={edits.at(-1)?.값 ?? ""} original={original} />
     </div>
