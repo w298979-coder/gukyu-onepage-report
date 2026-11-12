@@ -2,7 +2,8 @@
 import type { ReactNode } from "react";
 import DetailDialog from "./DetailDialog";
 import SourceBadge from "./SourceBadge";
-import type { Source } from "@/lib/types";
+import { CardFooter, EditNote } from "./Edits";
+import type { EditableItem, Source } from "@/lib/types";
 
 interface Props {
   title: string;
@@ -15,10 +16,12 @@ interface Props {
   history?: ReactNode;
   /** 과거이력 건수. 주어지면 카드 아래에 "과거이력 있음/없음"을 적는다. */
   historyCount?: number;
+  /** 수정·추가가 가능한 항목이면 필지 id와 항목을 준다. 없으면 수정 버튼을 만들지 않는다. */
+  edit?: { parcelId: string; item: EditableItem };
   children: ReactNode;
 }
 
-export default function ReportCard({ title, count, source = null, detail, history, historyCount, children }: Props) {
+export default function ReportCard({ title, count, source = null, detail, history, historyCount, edit, children }: Props) {
   return (
     <section className="flex min-h-0 flex-col overflow-hidden rounded-lg border border-zinc-300 bg-white">
       <header className="flex items-center justify-between gap-2 border-b border-zinc-200 bg-zinc-50 px-4 py-2.5">
@@ -36,8 +39,10 @@ export default function ReportCard({ title, count, source = null, detail, histor
           {detail && <DetailDialog title={title}>{detail}</DetailDialog>}
         </div>
       </header>
-      <div className="min-h-0 flex-1 overflow-hidden px-4 py-3 text-base leading-7 text-zinc-800">{children}</div>
-      {historyCount !== undefined && (
+      <div className="min-h-0 flex-1 overflow-hidden px-4 py-3 text-base leading-7 text-zinc-800">{children}{edit && <EditNote parcelId={edit.parcelId} item={edit.item} />}</div>
+      {edit && historyCount !== undefined ? (
+        <CardFooter parcelId={edit.parcelId} item={edit.item} title={title} baseHistoryCount={historyCount} />
+      ) : historyCount !== undefined && (
         <p className={`border-t border-zinc-200 px-4 py-1.5 text-sm ${historyCount > 0 ? "font-medium text-blue-700" : "text-zinc-500"}`}>
           {historyCount > 0 ? `과거이력 있음 (${historyCount}건)` : "과거이력 없음"}
         </p>
