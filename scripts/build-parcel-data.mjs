@@ -193,6 +193,43 @@ function makeVirtual(p, v, i, area) {
     const text = pick(["경계 확인 요청", "대부료 문의", "무단 적치물 신고", "통행 불편 민원", "토지 사용 가능 여부 문의", "인접 토지 경계 분쟁 문의"]);
     out.과거이용.push({ 종류: "민원", 시작일: iso(cy, mon, 5), 종료일: iso(cy, mon + 1, 15), 내용: `${text} · 처리 완료` });
   }
+  // 현재 기준 '해당 없음'이던 변상금·민원을 가상으로 채운다. 기존 가상 값이 바뀌지 않게 별도 난수(r3)를 쓰고,
+  // 상태와 모순되지 않게 점유자·대부계약은 건드리지 않는다(점유자가 없으면 변상금은 이미 반환된 '전 점유자'의 것으로 한다).
+  const r3 = rng(2000 + i);
+  const pick3 = (arr) => arr[Math.floor(r3() * arr.length)];
+  const dateIn = (year) => iso(year, 1 + Math.floor(r3() * (year === 2026 ? 9 : 12)), 1 + Math.floor(r3() * 28)); // 기준일(2026-11-12) 이전
+  if (out.변상금.length === 0) {
+    const occ = out.점유자[0];
+    const ownerId = occ ? occ.id : `${pid}-xo`; // -xo: 현재는 점유자 목록에 없는 전 점유자
+    const year = Math.max(2025 + (r3() < 0.35 ? 1 : 0), occ ? Number(occ.점유시작일.slice(0, 4)) : 0);
+    const months = pick3([6, 12, 12, 18]);
+    const base = occ?.점유면적 ?? (area ? Math.max(1, Math.round(area * 0.3)) : null);
+    out.변상금.push({
+      id: `${pid}-p-v1`,
+      점유자id: ownerId,
+      부과일: dateIn(year),
+      // 변상금 = 사용료·대부료의 120% (국유재산법 제72조①). 대부료는 공시지가×면적×5%로 단순 가정한 가상 값.
+      금액: base ? round1000(price * base * 0.05 * 1.2 * (months / 12)) : null,
+      납부상태: pick3(["완납", "완납", "일부납부", "미납"]),
+    });
+  }
+  if (out.민원.length === 0) {
+    const text = {
+      "사용중인재산(대부/수의)": ["대부료 감면·납부 방법 문의", "계약 갱신 절차 문의"],
+      "사용중인재산(무단점유)": ["무단 점유 신고", "점유자 변경 여부 확인 요청"],
+      "대부(입찰)검토재산": ["방치로 인한 잡초·쓰레기 정비 요청", "대부 가능 여부 문의"],
+      매각제한재산: ["경계 확인 요청", "매각 가능 여부 문의"],
+      "사용중인재산(대부/입찰)": ["계약 조건 확인 문의", "인접 토지 경계 확인 요청"],
+    }[p.상태];
+    out.민원.push({ id: `${pid}-c-v1`, 접수일: dateIn(2025 + (r3() < 0.5 ? 1 : 0)), 내용: pick3(text), 처리상태: pick3(["접수", "처리중", "완료", "완료"]) });
+  }
+  // 기타 관리사항의 과거이력(이전 관리 메모)
+  for (const [k, note] of [
+    [0, pick3(["현장 점검: 경계·점유 상태 이상 없음", "현장 점검: 경계 표지 훼손 확인, 보수 요청", "정기 실태조사 완료, 특이사항 없음"])],
+    [1, pick3(["관리 대장 정비 완료", "인접 토지 소유자 방문 상담 기록", "지적 경계 재확인"])],
+  ]) {
+    out.과거이용.push({ 종류: "관리사항", 시작일: iso(2022 + k, 3 + Math.floor(r3() * 6), 10), 종료일: iso(2022 + k, 4 + Math.floor(r3() * 6), 20), 내용: `이전 관리 메모: ${note}` });
+  }
   return { pid, ...out };
 }
 
@@ -228,7 +265,7 @@ for (const p of parcels) {
   if (p.구분 !== "토지") problems.push(`${p.지번}: 구분이 토지가 아님`);
   const occIds = new Set(p.점유자.map((o) => o.id));
   for (const l of p.대부계약) if (!occIds.has(l.점유자id)) problems.push(`${p.지번}: 대부계약의 점유자 없음`);
-  for (const x of p.변상금) if (!occIds.has(x.점유자id)) problems.push(`${p.지번}: 변상금의 점유자 없음`);
+  for (const x of p.변상금) if (!occIds.has(x.점유자id) && !x.점유자id.endsWith("-xo")) problems.push(`${p.지번}: 변상금의 점유자 없음`);
   for (const o of p.점유자) if (!/○/.test(o.이름)) problems.push(`${p.지번}: 점유자 이름이 가려지지 않음`);
   const childIds = [...p.점유자, ...p.대부계약, ...p.변상금, ...p.민원].map((x) => x.id);
   if (new Set(childIds).size !== childIds.length) problems.push(`${p.지번}: 점유자·계약·변상금·민원 id 중복`);
@@ -236,6 +273,8 @@ for (const p of parcels) {
     const occ = p.점유자.find((o) => o.id === x.점유자id);
     if (occ && x.부과일.slice(0, 4) < occ.점유시작일.slice(0, 4)) problems.push(`${p.지번}: 변상금 부과일이 점유 시작보다 빠름`);
   }
+  for (const x of p.변상금) if (x.부과일 > TODAY) problems.push(`${p.지번}: 변상금 부과일이 기준일 이후`);
+  for (const c of p.민원) if (c.접수일 > TODAY) problems.push(`${p.지번}: 민원 접수일이 기준일 이후`);
   if (p.상태 === "대부(입찰)검토재산" && (p.점유자.length || p.대부계약.length)) problems.push(`${p.지번}: 검토재산인데 점유자/계약이 있음`);
   if (p.상태 === "사용중인재산(무단점유)" && p.대부계약.length) problems.push(`${p.지번}: 무단점유인데 대부계약이 있음`);
   if (p.상태 === "사용중인재산(대부/수의)" && !p.대부계약.some((l) => l.상태 === "유효")) problems.push(`${p.지번}: 대부 재산인데 유효 계약 없음`);
