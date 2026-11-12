@@ -6,7 +6,7 @@ import type { EditableItem, LawArticle, Parcel, Restriction, Verdict } from "./t
 const VERDICT_LIST = ["가능", "불가", "추가 확인 필요"] as const; // lib/types.ts 의 VERDICTS 와 같은 값 (시험 스크립트가 값 import를 풀지 못해 복사)
 
 export const NO_BASIS = "근거 자료에서 확인되지 않았습니다";
-export const MAX_ARTICLE_CHARS = 1200;
+export const MAX_ARTICLE_CHARS = 3000;
 
 // ---------- 1. 적용할 제한 조항 고르기 ----------
 
