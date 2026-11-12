@@ -77,5 +77,7 @@ check("해당 종류의 이력이 없으면 '해당 없음'", pastHistory(noPast
 check("증감률 계산: 100→110은 +10.0%", priceHistory([{ 연도: 2024, 단가: 100 }, { 연도: 2025, 단가: 110 }])[0].includes("+10.0%") && priceHistory([{ 연도: 2024, 단가: 100 }, { 연도: 2025, 단가: 90 }])[0].includes("-10.0%"));
 check("모든 카드에 과거이력 줄이 있다", parcels.every((p) => { const v = buildReport(p); return [v.occupants, v.leases, v.penalties, v.complaints, v.etc].every((c) => c.history.length >= 1); }));
 
+check("과거이력 건수: 이력이 있으면 1건 이상, 없으면 0", buildReport(by("가양동 177-5")).occupants.historyCount >= 1 && buildReport(by("가양동 576-11")).leases.historyCount >= 1 && h4.etc.historyCount === 0 && buildReport(by("가양동 177-5")).penalties.historyCount === 0);
+
 console.log(failed === 0 ? "\n모든 시험 통과" : `\n실패 ${failed}건`);
 process.exit(failed === 0 ? 0 : 1);

@@ -27,6 +27,8 @@ export interface ListCard {
   detail: string[];
   /** "과거이력" 버튼에서 보여 줄 줄들. 이력이 없으면 ["해당 없음"] */
   history: string[];
+  /** 과거이력 건수(없으면 0). "해당 없음"과 수정 기록 줄은 세지 않는다 */
+  historyCount: number;
   source: Source | null;
 }
 
@@ -38,7 +40,7 @@ export interface ReportView {
   leases: ListCard;
   penalties: ListCard;
   complaints: ListCard;
-  etc: { rows: BasicRow[]; detail: string[]; history: string[] };
+  etc: { rows: BasicRow[]; detail: string[]; history: string[]; historyCount: number };
 }
 
 const MAX_SUMMARY = 3;
@@ -82,6 +84,9 @@ export function priceHistory(prices: LandPrice[] | null): string[] {
     })
     .reverse();
 }
+
+/** 과거이력 줄 중 실제 이력의 건수 */
+export const countHistory = (lines: string[]): number => lines.filter((l) => l !== NONE && !l.startsWith("수정 기록:")).length;
 
 /** 수정 기록은 담당자가 수정한 뒤(작업 8) 브라우저 저장소에서 읽어 이 자리에 붙인다. */
 export const NO_EDIT_RECORD = "수정 기록: 해당 없음";
@@ -136,6 +141,7 @@ export function buildReport(p: Parcel): ReportView {
       ];
     }),
     history: [...pastHistory(p, "무단점유"), NO_EDIT_RECORD],
+    historyCount: countHistory(pastHistory(p, "무단점유")),
     source: p.점유자.length === 0 ? null : "가상",
   };
 
@@ -145,6 +151,7 @@ export function buildReport(p: Parcel): ReportView {
     summary: limit(leaseLines, p.대부계약.length),
     detail: p.대부계약.length === 0 ? [NONE] : leaseLines,
     history: [...pastHistory(p, "대부계약"), NO_EDIT_RECORD],
+    historyCount: countHistory(pastHistory(p, "대부계약")),
     source: p.대부계약.length === 0 ? null : "가상",
   };
 
@@ -155,6 +162,7 @@ export function buildReport(p: Parcel): ReportView {
     summary: limit(penLines, p.변상금.length),
     detail: p.변상금.length === 0 ? [NONE] : penLines,
     history: [NONE, NO_EDIT_RECORD],
+    historyCount: 0,
     source: p.변상금.length === 0 ? null : "가상",
   };
 
@@ -165,6 +173,7 @@ export function buildReport(p: Parcel): ReportView {
     summary: limit(cLines, p.민원.length),
     detail: p.민원.length === 0 ? [NONE] : cLines,
     history: [NONE, NO_EDIT_RECORD],
+    historyCount: 0,
     source: p.민원.length === 0 ? null : "가상",
   };
 
@@ -199,6 +208,6 @@ export function buildReport(p: Parcel): ReportView {
     leases,
     penalties,
     complaints,
-    etc: { rows: etcRows, detail: etcDetail, history: [...priceHistory(prices), NO_EDIT_RECORD] },
+    etc: { rows: etcRows, detail: etcDetail, history: [...priceHistory(prices), NO_EDIT_RECORD], historyCount: countHistory(priceHistory(prices)) },
   };
 }
