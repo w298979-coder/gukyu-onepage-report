@@ -1,7 +1,7 @@
 // 리포트용 글(lib/report.ts) 시험. 실행: node --no-warnings scripts/test-report.mjs
 // 29건 모두에서 "undefined"·"null"·"NaN" 같은 깨진 값이 화면 글에 섞이지 않는지, 값이 없을 때 "해당 없음"이 나오는지 확인한다.
 import fs from "node:fs";
-import { buildReport, NONE, fmtArea, fmtWon } from "../lib/report.ts";
+import { buildReport, NONE, NO_EDIT_RECORD, fmtArea, fmtWon, pastHistory, priceHistory } from "../lib/report.ts";
 
 const parcels = JSON.parse(fs.readFileSync("data/parcels.json", "utf8")).parcels;
 let failed = 0;
@@ -59,6 +59,26 @@ check("점유자가 없으면 '해당 없음'", e.occupants.summary[0] === NONE 
 const f = buildReport(by("가양동 177-5")); // 무단점유: 변상금 3건
 check("변상금은 건수와 미완납 표시", f.penalties.count.includes("3건") && f.penalties.count.includes("미완납"), f.penalties.count);
 check("세 건을 넘으면 '외 N건' 안내", buildReport({ ...by("가양동 177-5"), 변상금: Array.from({ length: 5 }, (_, i) => ({ ...by("가양동 177-5").변상금[0], id: "x" + i })) }).penalties.summary.some((l) => l.startsWith("외 2건")));
+
+
+// 과거이력
+const h1 = buildReport(by("가양동 177-5")); // 무단점유 중
+check("무단점유 과거이력: 시작일과 '현재까지' 표시", h1.occupants.history[0].includes("현재까지") && h1.occupants.history.at(-1) === NO_EDIT_RECORD, h1.occupants.history[0]);
+const h2 = buildReport(by("가양동 576-11")); // 대부계약 만료 후 무단점유 전환
+check("대부계약 과거이력이 나온다", h2.leases.history[0] !== NONE && h2.leases.history[0].includes("만료"), h2.leases.history[0]);
+const h3 = buildReport(by("가양동 174-59"));
+check("공시지가 이력: 최근 연도가 먼저, 전년 대비 증감률 표시", h3.etc.history[0].startsWith("2026년") && /전년 대비 [+-]\d/.test(h3.etc.history[0]), h3.etc.history[0]);
+check("공시지가 이력의 마지막(가장 오래된 해)에는 증감률이 없다", !h3.etc.history.at(-2).includes("전년 대비"), h3.etc.history.at(-2));
+check("공시지가 이력이 연도 수만큼 나온다", h3.etc.history.length === 16 + 1, String(h3.etc.history.length));
+const h4 = buildReport(by("가양동 598-11")); // 공시지가 없음
+check("공시지가가 없으면 이력은 해당 없음", h4.etc.history[0] === NONE);
+const noPast = { ...parcels[0], 과거이용: [] }; // 데이터에는 모든 필지에 이력이 있으므로 이력 없는 필지를 만들어 시험
+check("해당 종류의 이력이 없으면 '해당 없음'", pastHistory(noPast, "무단점유").length === 1 && pastHistory(noPast, "무단점유")[0] === NONE, noPast.지번);
+check("증감률 계산: 100→110은 +10.0%", priceHistory([{ 연도: 2024, 단가: 100 }, { 연도: 2025, 단가: 110 }])[0].includes("+10.0%") && priceHistory([{ 연도: 2024, 단가: 100 }, { 연도: 2025, 단가: 90 }])[0].includes("-10.0%"));
+check("모든 카드에 과거이력 줄이 있다", parcels.every((p) => { const v = buildReport(p); return [v.occupants, v.leases, v.penalties, v.complaints, v.etc].every((c) => c.history.length >= 1); }));
+
+check("과거이력 건수: 이력이 있으면 1건 이상, 없으면 0", buildReport(by("가양동 177-5")).occupants.historyCount >= 1 && buildReport(by("가양동 576-11")).leases.historyCount >= 1 && h4.etc.historyCount === 0);
+check("29건 모두 변상금·민원 과거이력이 있다", parcels.every((p) => { const v = buildReport(p); return v.penalties.historyCount >= 1 && v.complaints.historyCount >= 1; }));
 
 console.log(failed === 0 ? "\n모든 시험 통과" : `\n실패 ${failed}건`);
 process.exit(failed === 0 ? 0 : 1);

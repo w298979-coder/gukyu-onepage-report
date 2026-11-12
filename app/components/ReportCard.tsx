@@ -11,10 +11,14 @@ interface Props {
   source?: Source | null;
   /** 세부확인 창의 내용. 없으면 버튼을 만들지 않는다. */
   detail?: ReactNode;
+  /** 과거이력 창의 내용. 없으면 버튼을 만들지 않는다. */
+  history?: ReactNode;
+  /** 과거이력 건수. 주어지면 카드 아래에 "과거이력 있음/없음"을 적는다. */
+  historyCount?: number;
   children: ReactNode;
 }
 
-export default function ReportCard({ title, count, source = null, detail, children }: Props) {
+export default function ReportCard({ title, count, source = null, detail, history, historyCount, children }: Props) {
   return (
     <section className="flex min-h-0 flex-col overflow-hidden rounded-lg border border-zinc-300 bg-white">
       <header className="flex items-center justify-between gap-2 border-b border-zinc-200 bg-zinc-50 px-4 py-2.5">
@@ -23,9 +27,21 @@ export default function ReportCard({ title, count, source = null, detail, childr
           {count && <span className="ml-1.5 font-normal text-zinc-500">{count}</span>}
           <SourceBadge source={source} />
         </h2>
-        {detail && <DetailDialog title={title}>{detail}</DetailDialog>}
+        <div className="flex shrink-0 items-center gap-1.5">
+          {history && (
+            <DetailDialog title={title} label="과거이력">
+              {history}
+            </DetailDialog>
+          )}
+          {detail && <DetailDialog title={title}>{detail}</DetailDialog>}
+        </div>
       </header>
       <div className="min-h-0 flex-1 overflow-hidden px-4 py-3 text-base leading-7 text-zinc-800">{children}</div>
+      {historyCount !== undefined && (
+        <p className={`border-t border-zinc-200 px-4 py-1.5 text-sm ${historyCount > 0 ? "font-medium text-blue-700" : "text-zinc-500"}`}>
+          {historyCount > 0 ? `과거이력 있음 (${historyCount}건)` : "과거이력 없음"}
+        </p>
+      )}
     </section>
   );
 }

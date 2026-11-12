@@ -167,6 +167,32 @@ function makeVirtual(p, v, i, area) {
     default:
       throw new Error(`알 수 없는 상태: ${p.상태}`);
   }
+  // 과거이력 보강: 모든 필지에서 변상금·민원의 과거이력 버튼이 비지 않도록 가상 이력을 만든다.
+  // (현재 기준 변상금·민원과는 별개로, 이미 종결된 옛 건이다. 기존 가상 값이 바뀌지 않게 별도 난수를 쓴다.)
+  const r2 = rng(1000 + i);
+  const pick = (arr) => arr[Math.floor(r2() * arr.length)];
+  const y = 2016 + Math.floor(r2() * 6); // 2016~2021
+  const mon = 1 + Math.floor(r2() * 10);
+  if (!out.과거이용.some((u) => u.종류 === "무단점유")) {
+    out.과거이용.push({ 종류: "무단점유", 시작일: iso(y - 3, mon, 1), 종료일: iso(y, mon, 28), 내용: "무단점유 정리 후 반환" });
+  }
+  if (!out.과거이용.some((u) => u.종류 === "대부계약")) {
+    out.과거이용.push({ 종류: "대부계약", 시작일: iso(y - 6, mon, 1), 종료일: iso(y - 1, mon, 28), 내용: "이전 대부계약 만료 후 계약 종료" });
+  }
+  if (!out.과거이용.some((u) => u.종류 === "변상금")) {
+    const won = area ? round1000(price * 0.8 * Math.max(1, area * 0.5) * 0.05 * 1.2) : null;
+    out.과거이용.push({
+      종류: "변상금",
+      시작일: iso(y, mon, 10),
+      종료일: iso(y, mon + 2, 20),
+      내용: `무단점유 기간 변상금 ${won === null ? "(금액 미확인)" : won.toLocaleString("ko-KR") + "원"} 부과 후 ${pick(["완납", "완납", "분할납부 후 완납"])}`,
+    });
+  }
+  if (!out.과거이용.some((u) => u.종류 === "민원")) {
+    const cy = 2017 + Math.floor(r2() * 6);
+    const text = pick(["경계 확인 요청", "대부료 문의", "무단 적치물 신고", "통행 불편 민원", "토지 사용 가능 여부 문의", "인접 토지 경계 분쟁 문의"]);
+    out.과거이용.push({ 종류: "민원", 시작일: iso(cy, mon, 5), 종료일: iso(cy, mon + 1, 15), 내용: `${text} · 처리 완료` });
+  }
   return { pid, ...out };
 }
 
