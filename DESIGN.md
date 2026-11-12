@@ -163,3 +163,12 @@ scripts/build-parcel-data.mjs  브이월드 조회·데이터 합치기
 - **근거 자료:** 국유농지 대부기준(`farmland.json`)을 추가했다. 국유재산관리처분업무기준과 총괄청 처분기준은 업무요강 별표 6(`disposal.json`, 승인권자·감정가 구간 칸 포함)으로 대체했다. 법·시행령·시행규칙 조문별 포함/검토필요/제외 점검표는 `data/law/coverage.json`, 못 찾은 문서는 `data/law/missing.json`이며 화면의 제한사항 세부확인에 표시한다.
 - **파일 구조 추가:** `lib/jibun.ts`(지번 정리·검색), `lib/report.ts`(리포트 글), `lib/edits.ts`(수정 저장), `lib/law.ts`(조문·제한 조항 읽기), `app/components/Edits.tsx`·`Review.tsx`·`PrintButton.tsx`, 시험 `scripts/test-*.mjs`, 데이터 작성 `scripts/fetch-vworld.mjs`·`build-parcel-data.mjs`·`merge-approval.mjs`.
 - **보안(배포용):** `/api/review`는 `Content-Type: application/json`, 같은 출처 요청, 8KB 이하, 정해진 키만 허용하고, 서버 메모리 기준 1분 5회 제한을 둔다(배포 환경에서는 Vercel Firewall 등 바깥 제한과 OpenAI 월 예산 한도를 함께 설정해야 한다). 보안 헤더는 `next.config.ts`, 배포 시 비밀 파일 제외는 `.vercelignore`에 있다.
+
+## 매각가능여부 검토의 두 구분 (2026-11-12)
+
+"매각가능여부 검토" 칸은 두 가지로 나눠 보여 준다.
+
+1. **관계법령상 제한(코드가 확인, AI 아님):** 브이월드의 용도지역·지구·구역 지정내역 이름을 `data/law/related-map.json`으로 관계법령에 잇고, 그 법령의 조문(국가법령정보센터 Open API로 `scripts/fetch-related-law.mjs`가 받아 `data/law/related/`에 저장, 16개 법령)에서 국유재산 매각·양도 제한을 확인한 결과를 "제한 있음 / 조건부 확인 필요 / 확인된 제한 없음 / 확인 필요(구역 정보 없음·미검토 구역)"로 표시한다. 판정 정의(`related-map.json`)는 조문 원문을 읽고 정리한 것이다. `lib/related-core.ts`가 구역 이름을 정의와 맞추고 종합 표시를 정한다.
+2. **처분기준상 제한(국유재산법·시행령·시행규칙·세칙·요강·기준 검토, AI):** 기존 AI 검토. 코드가 고른 제한 조항 안의 조문만 인용할 수 있다.
+
+관계법령상 제한이 "제한 있음"이면 AI가 "가능"이라 해도 "추가 확인 필요"로 바꾸고, AI 질문에는 관계법령 검토 결과와 근거 조문이 자료로 함께 들어간다(AI도 그 조문을 인용할 수 있음). 인증값(`LAW_OC`)은 `.env`에서 스크립트만 읽는다. 조문 파일 이름은 영문이다(한글 파일 이름은 Next.js 개발 서버(Turbopack)가 오류로 멈춘다).

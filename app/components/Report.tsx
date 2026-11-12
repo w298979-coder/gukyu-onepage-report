@@ -5,7 +5,8 @@ import { ManagementCard, ReviewProvider, VerdictCard } from "./Review";
 import { EditHistory } from "./Edits";
 import SourceBadge from "./SourceBadge";
 import { buildReport, type BasicRow } from "@/lib/report";
-import { ARTICLES, MISSING_DOCS, RESTRICTIONS } from "@/lib/law";
+import { ARTICLES, MISSING_DOCS, RELATED_ARTICLES, RELATED_DEFS, RESTRICTIONS } from "@/lib/law";
+import { reviewRelated } from "@/lib/related-core";
 import { restrictionViews, selectRestrictions } from "@/lib/review-core";
 import type { Parcel } from "@/lib/types";
 
@@ -28,6 +29,7 @@ function Rows({ rows }: { rows: BasicRow[] }) {
 
 export default function Report({ parcel }: { parcel: Parcel }) {
   const v = buildReport(parcel);
+  const related = reviewRelated(parcel.용도지역.value, RELATED_DEFS, RELATED_ARTICLES);
   const restrictions = restrictionViews(selectRestrictions(parcel, RESTRICTIONS), ARTICLES);
   return (
     <ReviewProvider parcelId={parcel.id}>
@@ -44,7 +46,7 @@ export default function Report({ parcel }: { parcel: Parcel }) {
         <Lines lines={v.leases.summary} />
       </ReportCard>
 
-      <VerdictCard />
+      <VerdictCard related={related} />
 
       <ReportCard title="변상금 부과 현황" count={v.penalties.count} source={v.penalties.source} detail={<DetailLines lines={v.penalties.detail} />} history={<><DetailLines lines={v.penalties.history} /><EditHistory parcelId={parcel.id} item="변상금" /></>} historyCount={v.penalties.historyCount} historySource="가상" edit={{ parcelId: parcel.id, item: "변상금", original: v.penalties.detail.join("\n") }}>
         <Lines lines={v.penalties.summary} />

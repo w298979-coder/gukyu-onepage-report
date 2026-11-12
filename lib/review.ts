@@ -1,6 +1,7 @@
 // Design Ref: §3.2, §6 — OpenAI 호출. 서버에서만 실행되며 OPENAI_API_KEY는 여기서만 읽는다.
 import "server-only";
-import { ARTICLES, RESTRICTIONS } from "./law";
+import { ALL_ARTICLES, RELATED_ARTICLES, RELATED_DEFS, RESTRICTIONS } from "./law";
+import { relatedForPrompt, reviewRelated } from "./related-core";
 import { getParcelById } from "./parcels";
 import {
   AiReviewSchema,
@@ -69,6 +70,8 @@ async function callOpenAI(parcelId: string, edits: ReturnType<typeof sanitizeEdi
   }
 
   const restrictions = selectRestrictions(parcel, RESTRICTIONS);
+  const related = reviewRelated(parcel.용도지역.value, RELATED_DEFS, RELATED_ARTICLES);
+  const relatedPrompt = relatedForPrompt(related);
 
   let res: Response;
   try {
@@ -82,7 +85,7 @@ async function callOpenAI(parcelId: string, edits: ReturnType<typeof sanitizeEdi
         response_format: { type: "json_object" },
         messages: [
           { role: "system", content: SYSTEM_PROMPT },
-          { role: "user", content: buildUserPrompt(parcel, edits, restrictions, ARTICLES) },
+          { role: "user", content: buildUserPrompt(parcel, edits, restrictions, ALL_ARTICLES, relatedPrompt) },
         ],
       }),
       signal: AbortSignal.timeout(TIMEOUT_MS),
@@ -107,5 +110,8 @@ async function callOpenAI(parcelId: string, edits: ReturnType<typeof sanitizeEdi
   }
   if (!parsed.success) throw new ReviewError("AI 답의 형식이 맞지 않아 표시하지 않았습니다. 다시 시도해 주세요.", 502);
 
-  return finalizeReview(parsed.data, parcel, restrictions, ARTICLES);
+  return finalizeReview(parsed.data, parcel, restrictions, ALL_ARTICLES, {
+    extraAllowedIds: relatedPrompt.articleIds,
+    relatedLimited: related.items.some((i) => i.판정 === "제한 있음"),
+  });
 }
