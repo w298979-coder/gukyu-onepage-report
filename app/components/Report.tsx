@@ -1,6 +1,7 @@
 // Design Ref: §2 — 필지별 한 페이지 리포트. 큰 화면(1920×1080)에서는 페이지 스크롤 없이 한 장에 모든 칸이 보인다.
 // Plan: 작업 6. 현재 기준 항목 전체를 한 줄 요약으로 보여주고, 카드마다 세부확인 창을 둔다.
 import ReportCard, { DetailLines, Lines, PendingCard } from "./ReportCard";
+import { EditHistory } from "./Edits";
 import SourceBadge from "./SourceBadge";
 import { buildReport, type BasicRow } from "@/lib/report";
 import type { Parcel } from "@/lib/types";
@@ -30,25 +31,25 @@ export default function Report({ parcel }: { parcel: Parcel }) {
         <Rows rows={v.basic} />
       </ReportCard>
 
-      <ReportCard title="점유자 현황" count={v.occupants.count} source={v.occupants.source} detail={<DetailLines lines={v.occupants.detail} />} history={<DetailLines lines={v.occupants.history} />} historyCount={v.occupants.historyCount}>
+      <ReportCard title="점유자 현황" count={v.occupants.count} source={v.occupants.source} detail={<DetailLines lines={v.occupants.detail} />} history={<><DetailLines lines={v.occupants.history} /><EditHistory parcelId={parcel.id} item="점유자" /></>} historyCount={v.occupants.historyCount} edit={{ parcelId: parcel.id, item: "점유자" }}>
         <Lines lines={v.occupants.summary} />
       </ReportCard>
 
-      <ReportCard title="대부계약 현황" count={v.leases.count} source={v.leases.source} detail={<DetailLines lines={v.leases.detail} />} history={<DetailLines lines={v.leases.history} />} historyCount={v.leases.historyCount}>
+      <ReportCard title="대부계약 현황" count={v.leases.count} source={v.leases.source} detail={<DetailLines lines={v.leases.detail} />} history={<><DetailLines lines={v.leases.history} /><EditHistory parcelId={parcel.id} item="대부계약" /></>} historyCount={v.leases.historyCount} edit={{ parcelId: parcel.id, item: "대부계약" }}>
         <Lines lines={v.leases.summary} />
       </ReportCard>
 
       <PendingCard title="매각가능여부 검토" note="저장된 법령·내규를 근거로 판정을 만드는 기능은 작업 9에서 이 칸에 추가합니다." />
 
-      <ReportCard title="변상금 부과 현황" count={v.penalties.count} source={v.penalties.source} detail={<DetailLines lines={v.penalties.detail} />} history={<DetailLines lines={v.penalties.history} />} historyCount={v.penalties.historyCount}>
+      <ReportCard title="변상금 부과 현황" count={v.penalties.count} source={v.penalties.source} detail={<DetailLines lines={v.penalties.detail} />} history={<><DetailLines lines={v.penalties.history} /><EditHistory parcelId={parcel.id} item="변상금" /></>} historyCount={v.penalties.historyCount} edit={{ parcelId: parcel.id, item: "변상금" }}>
         <Lines lines={v.penalties.summary} />
       </ReportCard>
 
-      <ReportCard title="민원 처리 현황" count={v.complaints.count} source={v.complaints.source} detail={<DetailLines lines={v.complaints.detail} />} history={<DetailLines lines={v.complaints.history} />} historyCount={v.complaints.historyCount}>
+      <ReportCard title="민원 처리 현황" count={v.complaints.count} source={v.complaints.source} detail={<DetailLines lines={v.complaints.detail} />} history={<><DetailLines lines={v.complaints.history} /><EditHistory parcelId={parcel.id} item="민원" /></>} historyCount={v.complaints.historyCount} edit={{ parcelId: parcel.id, item: "민원" }}>
         <Lines lines={v.complaints.summary} />
       </ReportCard>
 
-      <ReportCard title="기타 관리사항" detail={<DetailLines lines={v.etc.detail} />} history={<DetailLines lines={v.etc.history} />} historyCount={v.etc.historyCount}>
+      <ReportCard title="기타 관리사항" detail={<DetailLines lines={v.etc.detail} />} history={<><DetailLines lines={v.etc.history} /><EditHistory parcelId={parcel.id} item="기타관리사항" /></>} historyCount={v.etc.historyCount} edit={{ parcelId: parcel.id, item: "기타관리사항" }}>
         <Rows rows={v.etc.rows} />
       </ReportCard>
 
