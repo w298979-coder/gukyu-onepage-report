@@ -8,7 +8,8 @@ import sechik from "@/data/law/sechik.json";
 import yogang from "@/data/law/yogang.json";
 import disposal from "@/data/law/disposal.json";
 import restrictionsRaw from "@/data/law/restrictions.json";
-import type { LawArticle, Restriction } from "./types";
+import missingRaw from "@/data/law/missing.json";
+import type { LawArticle, MissingDoc, Restriction } from "./types";
 
 const docs = [act, decree, rule, farmland, sechik, yogang, disposal] as unknown as { articles: LawArticle[] }[];
 
@@ -16,3 +17,6 @@ const docs = [act, decree, rule, farmland, sechik, yogang, disposal] as unknown 
 export const ARTICLES: Map<string, LawArticle> = new Map(docs.flatMap((d) => d.articles).map((a) => [a.id, a]));
 
 export const RESTRICTIONS = (restrictionsRaw as unknown as { restrictions: Restriction[] }).restrictions;
+
+/** 근거 자료로 쓰기로 했지만 저장하지 못한 문서(화면의 제한사항 세부확인에 '미확인'으로 표시) */
+export const MISSING_DOCS = (missingRaw as unknown as { documents: MissingDoc[] }).documents;

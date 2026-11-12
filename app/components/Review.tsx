@@ -1,10 +1,12 @@
 "use client";
 // Design Ref: §3.2 — 매각가능여부 검토 칸과 제한사항·관리방안 칸.
-// 제한 조항은 서버(코드)가 고른 것을 처음부터 보여주고, "AI 검토 실행"을 누르면 /api/review 에서 판정·관리방안·주의사항을 받아 채운다.
-import { createContext, useCallback, useContext, useRef, useState, type ReactNode } from "react";
+// 필지 화면이 열리면 자동으로 /api/review 를 불러 판정·관리방안·주의사항을 채우고, 수정 내용이 바뀌면 다시 검토한다.
+// 제한 조항은 서버(코드)가 고른 것을 처음부터 보여준다. 수정자 이름은 서버로 보내지 않는다.
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { EDITABLE_ITEMS } from "@/lib/types";
-import { getEdits, parseStore, STORAGE_KEY } from "@/lib/edits";
+import { getEdits, parseStore } from "@/lib/edits";
 import type { RestrictionView, ReviewResult, ReviewSentence } from "@/lib/review-core";
+import { useEditsRaw } from "./Edits";
 import ReportCard from "./ReportCard";
 
 type State = { kind: "idle" } | { kind: "loading" } | { kind: "error"; message: string } | { kind: "done"; result: ReviewResult };
@@ -21,37 +23,58 @@ function useReview(): Ctx {
   return c;
 }
 
-/** 두 칸이 같은 검토 결과를 보도록 감싸는 부분 */
+/** 두 칸이 같은 검토 결과를 보도록 감싸는 부분. 화면이 열릴 때와 수정 내용이 바뀔 때 자동으로 검토한다. */
 export function ReviewProvider({ parcelId, children }: { parcelId: string; children: ReactNode }) {
   const [state, setState] = useState<State>({ kind: "idle" });
   const busy = useRef(false);
+  const again = useRef(false); // 검토 중에 수정 내용이 바뀌면 끝난 뒤 한 번 더 한다
+  const raw = useEditsRaw();
+
+  // 이 필지의 현재 수정 내용(항목별 값). 수정자 이름·시각은 포함하지 않는다.
+  const edits = useMemo(() => {
+    const store = parseStore(raw);
+    const out: Record<string, string> = {};
+    for (const item of EDITABLE_ITEMS) {
+      const cur = getEdits(store, parcelId, item).at(-1);
+      if (cur) out[item] = cur.값;
+    }
+    return out;
+  }, [raw, parcelId]);
+  const editsKey = JSON.stringify(edits);
+  const latestKey = useRef(editsKey); // 가장 최근 수정 내용(검토를 시작할 때 읽는다)
 
   const run = useCallback(async () => {
-    if (busy.current) return;
+    if (busy.current) {
+      again.current = true;
+      return;
+    }
     busy.current = true;
-    setState({ kind: "loading" });
     try {
-      // 이 브라우저에 저장된 현재 수정 내용만 보낸다(수정자 이름·시각은 보내지 않는다).
-      const store = parseStore(window.localStorage.getItem(STORAGE_KEY));
-      const edits: Record<string, string> = {};
-      for (const item of EDITABLE_ITEMS) {
-        const cur = getEdits(store, parcelId, item).at(-1);
-        if (cur) edits[item] = cur.값;
-      }
-      const res = await fetch("/api/review", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ parcelId, edits }),
-      });
-      const body = (await res.json().catch(() => null)) as (ReviewResult & { error?: string }) | null;
-      if (!res.ok || !body || body.error) setState({ kind: "error", message: body?.error ?? "검토 중 오류가 발생했습니다." });
-      else setState({ kind: "done", result: body });
-    } catch {
-      setState({ kind: "error", message: "서버에 연결하지 못했습니다. 잠시 뒤 다시 시도해 주세요." });
+      do {
+        again.current = false;
+        setState({ kind: "loading" });
+        try {
+          const res = await fetch("/api/review", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({ parcelId, edits: JSON.parse(latestKey.current) }),
+          });
+          const body = (await res.json().catch(() => null)) as (ReviewResult & { error?: string }) | null;
+          if (!res.ok || !body || body.error) setState({ kind: "error", message: body?.error ?? "검토 중 오류가 발생했습니다." });
+          else setState({ kind: "done", result: body });
+        } catch {
+          setState({ kind: "error", message: "서버에 연결하지 못했습니다. 잠시 뒤 다시 시도해 주세요." });
+        }
+      } while (again.current); // 검토 중에 수정 내용이 바뀌었으면 한 번 더 한다
     } finally {
       busy.current = false;
     }
   }, [parcelId]);
+
+  useEffect(() => {
+    latestKey.current = editsKey;
+    void run();
+  }, [run, editsKey]);
 
   return <ReviewContext.Provider value={{ state, run }}>{children}</ReviewContext.Provider>;
 }
@@ -125,20 +148,23 @@ export function VerdictCard() {
   if (state.kind !== "done") {
     return (
       <ReportCard title="매각가능여부 검토">
-        <p className="text-zinc-600">저장된 법령·내규를 근거로 AI가 매각가능여부를 검토합니다. 참고용이며 근거가 확인되지 않으면 &quot;추가 확인 필요&quot;로 표시합니다.</p>
-        {state.kind === "error" && (
-          <p role="alert" className="mt-2 text-red-700">
-            {state.message}
-          </p>
+        {state.kind === "error" ? (
+          <>
+            <p role="alert" className="text-red-700">
+              {state.message}
+            </p>
+            <p className="mt-1 text-zinc-600">제한사항은 오른쪽 아래 칸에서 그대로 확인할 수 있습니다.</p>
+            <button
+              type="button"
+              onClick={run}
+              className="mt-3 rounded bg-blue-700 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-800 print:hidden"
+            >
+              다시 시도
+            </button>
+          </>
+        ) : (
+          <p className="text-zinc-600">저장된 법령·내규를 근거로 AI가 매각가능여부를 검토하는 중입니다… (최대 30초) 참고용이며 근거가 확인되지 않으면 &quot;추가 확인 필요&quot;로 표시합니다.</p>
         )}
-        <button
-          type="button"
-          onClick={run}
-          disabled={state.kind === "loading"}
-          className="mt-3 rounded bg-blue-700 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-800 disabled:opacity-60 print:hidden"
-        >
-          {state.kind === "loading" ? "검토 중… (최대 30초)" : state.kind === "error" ? "다시 시도" : "AI 검토 실행"}
-        </button>
       </ReportCard>
     );
   }
@@ -174,15 +200,12 @@ export function VerdictCard() {
           r.verdictNote ?? "근거 자료에서 확인되지 않았습니다"
         )}
       </p>
-      <button type="button" onClick={run} className="mt-2 text-sm text-blue-700 underline print:hidden">
-        다시 검토
-      </button>
     </ReportCard>
   );
 }
 
 /** 대부·처분 제한사항 / 관리방안 칸. 제한 조항은 서버가 고른 것을 처음부터 보여준다. */
-export function ManagementCard({ restrictions }: { restrictions: RestrictionView[] }) {
+export function ManagementCard({ restrictions, missing }: { restrictions: RestrictionView[]; missing: { 문서명: string; 사유: string }[] }) {
   const { state } = useReview();
   const result = state.kind === "done" ? state.result : null;
   const list = result ? result.restrictions : restrictions;
@@ -200,13 +223,27 @@ export function ManagementCard({ restrictions }: { restrictions: RestrictionView
           <div className="mb-4">
             <RestrictionList items={list} />
           </div>
+          <div className="mb-4 rounded bg-zinc-50 px-3 py-2">
+            <p className="mb-1 font-medium">근거 자료에서 확인하지 못한 문서 ({missing.length}건)</p>
+            {missing.length === 0 ? (
+              <p className="text-zinc-500">해당 없음</p>
+            ) : (
+              <ul className="flex flex-col gap-1">
+                {missing.map((d) => (
+                  <li key={d.문서명} className="break-words">
+                    {d.문서명} — <span className="text-zinc-600">{d.사유}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
           {result ? (
             <>
               <SentenceList title="종합 관리방안 (AI 검토 · 참고용)" items={result.management} />
               <SentenceList title="주의사항 (AI 검토 · 참고용)" items={result.cautions} />
             </>
           ) : (
-            <p className="text-zinc-500">관리방안과 주의사항은 &quot;AI 검토 실행&quot; 후에 표시됩니다.</p>
+            <p className="text-zinc-500">관리방안과 주의사항은 AI 검토가 끝나면 표시됩니다.</p>
           )}
         </>
       }
@@ -219,16 +256,20 @@ export function ManagementCard({ restrictions }: { restrictions: RestrictionView
           <li key={i} className="line-clamp-2 break-words">
             <span className="mr-1 rounded bg-zinc-100 px-1.5 py-0.5 text-xs">{r.대상}</span>
             {r.제한내용}
+            <span className="ml-1 text-xs text-zinc-500">[{r.citation.label}]</span>
           </li>
         ))}
       </ul>
       {result ? (
         <p className="mt-2 line-clamp-2 break-words text-zinc-800">
           <span className="font-medium">관리방안:</span> {mgmt ? mgmt.text : "근거 자료에서 확인되지 않았습니다"}
+          {mgmt && <Cites s={mgmt} />}
           {result.cautions.length > 0 && <span className="text-zinc-500"> · 주의사항 {result.cautions.length}건</span>}
         </p>
       ) : (
-        <p className="mt-2 text-zinc-500">관리방안·주의사항: AI 검토 실행 후 표시</p>
+        <p className="mt-2 text-zinc-500">
+          {state.kind === "error" ? "관리방안·주의사항: AI 검토를 불러오지 못했습니다" : "관리방안·주의사항: AI 검토 중…"}
+        </p>
       )}
     </ReportCard>
   );

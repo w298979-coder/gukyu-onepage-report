@@ -2,7 +2,7 @@
 import type { ReactNode } from "react";
 import DetailDialog from "./DetailDialog";
 import SourceBadge from "./SourceBadge";
-import { CardFooter, EditNote } from "./Edits";
+import { CardFooter, EditBody, EditSource } from "./Edits";
 import type { EditableItem, Source } from "@/lib/types";
 
 interface Props {
@@ -14,38 +14,54 @@ interface Props {
   detail?: ReactNode;
   /** 과거이력 창의 내용. 없으면 버튼을 만들지 않는다. */
   history?: ReactNode;
+  /** 과거이력 창 머리에 붙일 출처(예: 가상 이력이면 "가상") */
+  historySource?: Source | null;
   /** 과거이력 건수. 주어지면 카드 아래에 "과거이력 있음/없음"을 적는다. */
   historyCount?: number;
-  /** 수정·추가가 가능한 항목이면 필지 id와 항목을 준다. 없으면 수정 버튼을 만들지 않는다. */
-  edit?: { parcelId: string; item: EditableItem };
+  /** 수정·추가가 가능한 항목이면 필지 id·항목·수정 전 원래 내용을 준다. 없으면 수정 버튼을 만들지 않는다. */
+  edit?: { parcelId: string; item: EditableItem; original: string };
   children: ReactNode;
 }
 
-export default function ReportCard({ title, count, source = null, detail, history, historyCount, edit, children }: Props) {
+export default function ReportCard({ title, count, source = null, detail, history, historySource = null, historyCount, edit, children }: Props) {
   return (
     <section className="flex min-h-0 flex-col overflow-hidden rounded-lg border border-zinc-300 bg-white">
       <header className="flex items-center justify-between gap-2 border-b border-zinc-200 bg-zinc-50 px-4 py-2.5">
         <h2 className="min-w-0 truncate text-base font-semibold text-zinc-900">
           {title}
           {count && <span className="ml-1.5 font-normal text-zinc-500">{count}</span>}
-          <SourceBadge source={source} />
+          {edit ? <EditSource parcelId={edit.parcelId} item={edit.item} fallback={source} /> : <SourceBadge source={source} />}
         </h2>
         <div className="flex shrink-0 items-center gap-1.5">
           {history && (
-            <DetailDialog title={title} label="과거이력">
+            <DetailDialog title={title} label="과거이력" source={historySource}>
               {history}
             </DetailDialog>
           )}
-          {detail && <DetailDialog title={title}>{detail}</DetailDialog>}
+          {detail && (
+            <DetailDialog title={title} source={source}>
+              {detail}
+            </DetailDialog>
+          )}
         </div>
       </header>
-      <div className="min-h-0 flex-1 overflow-hidden px-4 py-3 text-base leading-7 text-zinc-800">{children}{edit && <EditNote parcelId={edit.parcelId} item={edit.item} />}</div>
+      <div className="min-h-0 flex-1 overflow-hidden px-4 py-3 text-base leading-7 text-zinc-800">
+        {edit ? (
+          <EditBody parcelId={edit.parcelId} item={edit.item}>
+            {children}
+          </EditBody>
+        ) : (
+          children
+        )}
+      </div>
       {edit && historyCount !== undefined ? (
-        <CardFooter parcelId={edit.parcelId} item={edit.item} title={title} baseHistoryCount={historyCount} />
-      ) : historyCount !== undefined && (
-        <p className={`border-t border-zinc-200 px-4 py-1.5 text-sm ${historyCount > 0 ? "font-medium text-blue-700" : "text-zinc-500"}`}>
-          {historyCount > 0 ? `과거이력 있음 (${historyCount}건)` : "과거이력 없음"}
-        </p>
+        <CardFooter parcelId={edit.parcelId} item={edit.item} title={title} baseHistoryCount={historyCount} original={edit.original} />
+      ) : (
+        historyCount !== undefined && (
+          <p className={`border-t border-zinc-200 px-4 py-1.5 text-sm ${historyCount > 0 ? "font-medium text-blue-700" : "text-zinc-500"}`}>
+            {historyCount > 0 ? `과거이력 있음 (${historyCount}건)` : "과거이력 없음"}
+          </p>
+        )
       )}
     </section>
   );
@@ -74,14 +90,5 @@ export function DetailLines({ lines }: { lines: string[] }) {
         </li>
       ))}
     </ul>
-  );
-}
-
-/** 작업 9에서 채울 칸 */
-export function PendingCard({ title, note }: { title: string; note: string }) {
-  return (
-    <ReportCard title={title}>
-      <p className="text-zinc-500">{note}</p>
-    </ReportCard>
   );
 }

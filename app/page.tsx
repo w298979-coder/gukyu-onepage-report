@@ -43,9 +43,7 @@ async function LookupSection({ searchParams }: { searchParams: SearchParams }) {
     <main className="mx-auto flex w-full max-w-[1800px] min-h-0 flex-1 flex-col gap-3 px-4 py-3">
       <header className="flex flex-wrap items-center gap-x-6 gap-y-2">
         <h1 className="text-2xl font-bold tracking-tight">국유재산 원보드리포트</h1>
-        <div className="min-w-0 flex-1 print:hidden">
-          <div className="min-w-0 flex-1 print:hidden"><LookupForm defaultValue={q} /></div>
-        </div>
+        <div className="min-w-0 flex-1 print:hidden"><LookupForm defaultValue={q} /></div>
       </header>
 
       {!selected && (

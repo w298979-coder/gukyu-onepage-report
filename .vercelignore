@@ -1,0 +1,7 @@
+# Vercel CLI로 배포할 때 비밀 값과 개발용 파일이 올라가지 않게 한다.
+.env
+.env.*
+.claude
+trash-can
+scripts
+docs
