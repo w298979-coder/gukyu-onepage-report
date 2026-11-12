@@ -5,7 +5,8 @@ import { ManagementCard, ReviewProvider, VerdictCard } from "./Review";
 import { EditHistory } from "./Edits";
 import SourceBadge from "./SourceBadge";
 import { buildReport, type BasicRow } from "@/lib/report";
-import { ARTICLES, RESTRICTIONS } from "@/lib/law";
+import { ARTICLES, MISSING_DOCS, RELATED_ARTICLES, RELATED_DEFS, RESTRICTIONS } from "@/lib/law";
+import { reviewRelated } from "@/lib/related-core";
 import { restrictionViews, selectRestrictions } from "@/lib/review-core";
 import type { Parcel } from "@/lib/types";
 
@@ -28,6 +29,7 @@ function Rows({ rows }: { rows: BasicRow[] }) {
 
 export default function Report({ parcel }: { parcel: Parcel }) {
   const v = buildReport(parcel);
+  const related = reviewRelated(parcel.용도지역.value, RELATED_DEFS, RELATED_ARTICLES);
   const restrictions = restrictionViews(selectRestrictions(parcel, RESTRICTIONS), ARTICLES);
   return (
     <ReviewProvider parcelId={parcel.id}>
@@ -36,29 +38,29 @@ export default function Report({ parcel }: { parcel: Parcel }) {
         <Rows rows={v.basic} />
       </ReportCard>
 
-      <ReportCard title="점유자 현황" count={v.occupants.count} source={v.occupants.source} detail={<DetailLines lines={v.occupants.detail} />} history={<><DetailLines lines={v.occupants.history} /><EditHistory parcelId={parcel.id} item="점유자" /></>} historyCount={v.occupants.historyCount} edit={{ parcelId: parcel.id, item: "점유자" }}>
+      <ReportCard title="점유자 현황" count={v.occupants.count} source={v.occupants.source} detail={<DetailLines lines={v.occupants.detail} />} history={<><DetailLines lines={v.occupants.history} /><EditHistory parcelId={parcel.id} item="점유자" /></>} historyCount={v.occupants.historyCount} historySource="가상" edit={{ parcelId: parcel.id, item: "점유자", original: v.occupants.detail.join("\n") }}>
         <Lines lines={v.occupants.summary} />
       </ReportCard>
 
-      <ReportCard title="대부계약 현황" count={v.leases.count} source={v.leases.source} detail={<DetailLines lines={v.leases.detail} />} history={<><DetailLines lines={v.leases.history} /><EditHistory parcelId={parcel.id} item="대부계약" /></>} historyCount={v.leases.historyCount} edit={{ parcelId: parcel.id, item: "대부계약" }}>
+      <ReportCard title="대부계약 현황" count={v.leases.count} source={v.leases.source} detail={<DetailLines lines={v.leases.detail} />} history={<><DetailLines lines={v.leases.history} /><EditHistory parcelId={parcel.id} item="대부계약" /></>} historyCount={v.leases.historyCount} historySource="가상" edit={{ parcelId: parcel.id, item: "대부계약", original: v.leases.detail.join("\n") }}>
         <Lines lines={v.leases.summary} />
       </ReportCard>
 
-      <VerdictCard />
+      <VerdictCard related={related} />
 
-      <ReportCard title="변상금 부과 현황" count={v.penalties.count} source={v.penalties.source} detail={<DetailLines lines={v.penalties.detail} />} history={<><DetailLines lines={v.penalties.history} /><EditHistory parcelId={parcel.id} item="변상금" /></>} historyCount={v.penalties.historyCount} edit={{ parcelId: parcel.id, item: "변상금" }}>
+      <ReportCard title="변상금 부과 현황" count={v.penalties.count} source={v.penalties.source} detail={<DetailLines lines={v.penalties.detail} />} history={<><DetailLines lines={v.penalties.history} /><EditHistory parcelId={parcel.id} item="변상금" /></>} historyCount={v.penalties.historyCount} historySource="가상" edit={{ parcelId: parcel.id, item: "변상금", original: v.penalties.detail.join("\n") }}>
         <Lines lines={v.penalties.summary} />
       </ReportCard>
 
-      <ReportCard title="민원 처리 현황" count={v.complaints.count} source={v.complaints.source} detail={<DetailLines lines={v.complaints.detail} />} history={<><DetailLines lines={v.complaints.history} /><EditHistory parcelId={parcel.id} item="민원" /></>} historyCount={v.complaints.historyCount} edit={{ parcelId: parcel.id, item: "민원" }}>
+      <ReportCard title="민원 처리 현황" count={v.complaints.count} source={v.complaints.source} detail={<DetailLines lines={v.complaints.detail} />} history={<><DetailLines lines={v.complaints.history} /><EditHistory parcelId={parcel.id} item="민원" /></>} historyCount={v.complaints.historyCount} historySource="가상" edit={{ parcelId: parcel.id, item: "민원", original: v.complaints.detail.join("\n") }}>
         <Lines lines={v.complaints.summary} />
       </ReportCard>
 
-      <ReportCard title="기타 관리사항" detail={<DetailLines lines={v.etc.detail} />} history={<><DetailLines lines={v.etc.history} /><EditHistory parcelId={parcel.id} item="기타관리사항" /></>} historyCount={v.etc.historyCount} edit={{ parcelId: parcel.id, item: "기타관리사항" }}>
+      <ReportCard title="기타 관리사항" detail={<DetailLines lines={v.etc.detail} />} history={<><DetailLines lines={v.etc.history} /><EditHistory parcelId={parcel.id} item="기타관리사항" /></>} historyCount={v.etc.historyCount} historySource="브이월드" edit={{ parcelId: parcel.id, item: "기타관리사항", original: v.etc.detail.join("\n") }}>
         <Rows rows={v.etc.rows} />
       </ReportCard>
 
-      <ManagementCard restrictions={restrictions} />
+      <ManagementCard restrictions={restrictions} missing={MISSING_DOCS} />
     </div>
     </ReviewProvider>
   );

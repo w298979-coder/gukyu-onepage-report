@@ -2,15 +2,20 @@
 // Design Ref: §2 — "세부확인" 버튼. 누르면 카드의 세부 내역 전체를 창으로 보여준다.
 // 창 안의 내용은 서버에서 만들어 children으로 받으므로, 브라우저로 따로 데이터를 가져오지 않는다.
 import { useRef, type ReactNode } from "react";
+import SourceBadge from "./SourceBadge";
+import type { Source } from "@/lib/types";
 
 export default function DetailDialog({
   title,
   label = "세부확인",
+  source = null,
   children,
 }: {
   title: string;
   /** 버튼 글자. 기본은 "세부확인", 과거 이력은 "과거이력" */
   label?: string;
+  /** 창 안 내용의 출처(예: 가상 데이터). 있으면 창 제목 옆에 표시 */
+  source?: Source | null;
   children: ReactNode;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
@@ -34,6 +39,7 @@ export default function DetailDialog({
         <div className="flex items-center justify-between border-b border-zinc-200 px-5 py-3">
           <h3 className="text-base font-semibold">
             {title} · {label}
+            <SourceBadge source={source} />
           </h3>
           <button
             type="button"

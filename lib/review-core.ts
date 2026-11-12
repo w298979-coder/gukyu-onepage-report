@@ -129,6 +129,7 @@ export function buildUserPrompt(
   edits: Partial<Record<EditableItem, string>>,
   restrictions: Restriction[],
   articles: Map<string, LawArticle>,
+  related?: { lines: string[]; articleIds: string[] },
 ): string {
   const facts = {
     소재지: parcel.지번,
@@ -143,7 +144,7 @@ export function buildUserPrompt(
     민원: parcel.민원.map((c) => ({ 접수일: c.접수일, 처리상태: c.처리상태, 내용: c.내용 })),
     기타관리사항: parcel.기타관리사항.value,
   };
-  const ids = [...new Set(restrictions.map((r) => r.조문id))].filter((id) => articles.has(id));
+  const ids = [...new Set([...restrictions.map((r) => r.조문id), ...(related?.articleIds ?? [])])].filter((id) => articles.has(id));
   const arts = ids.map((id) => {
     const a = articles.get(id)!;
     return `<조문 id="${a.id}">\n${a.문서명} ${a.조문번호}\n${a.내용.slice(0, MAX_ARTICLE_CHARS)}\n</조문>`;
@@ -160,8 +161,11 @@ export function buildUserPrompt(
     "",
     `[상태별 관리방향 참고] ${DIRECTION[parcel.상태] ?? "해당 없음"}`,
     "",
-    "[이 필지에 적용되는 제한 조항]",
+    "[이 필지에 적용되는 제한 조항 (국유재산법·시행령·시행규칙·세칙·요강 등)]",
     lim.length ? lim.join("\n") : "없음",
+    "",
+    "[관계법령상 제한 검토 결과 (코드가 브이월드 용도지역·지구·구역으로 확인한 것)]",
+    related && related.lines.length ? related.lines.join("\n") : "없음",
     "",
     "[조문]",
     arts.join("\n\n") || "없음",
@@ -175,8 +179,10 @@ export function finalizeReview(
   parcel: Parcel,
   restrictions: Restriction[],
   articles: Map<string, LawArticle>,
+  opts: { extraAllowedIds?: string[]; relatedLimited?: boolean } = {},
 ): ReviewResult {
   const allowed = allowedArticleIds(restrictions, articles);
+  for (const id of opts.extraAllowedIds ?? []) if (articles.has(id)) allowed.add(id);
   let hidden = 0;
   const verify = (list: AiReview["verdictReasons"]): ReviewSentence[] => {
     const out: ReviewSentence[] = [];
@@ -208,6 +214,11 @@ export function finalizeReview(
   } else if (parcel.상태 === "매각제한재산" && verdict === "가능") {
     verdict = "추가 확인 필요";
     verdictNote = '매각제한재산이므로 "가능"으로 표시하지 않고 "추가 확인 필요"로 바꿨습니다.';
+  }
+  // 관계법령상 처분 제한이 확인된 필지(예: 정비구역·도시공원)는 AI가 "가능"이라 해도 "추가 확인 필요"로 바꾼다.
+  if (verdict === "가능" && opts.relatedLimited) {
+    verdict = "추가 확인 필요";
+    verdictNote = '관계법령상 처분(매각·양도) 제한이 확인된 필지이므로 "가능"으로 표시하지 않고 "추가 확인 필요"로 바꿨습니다.';
   }
   // "가능"이라도 이 필지에 적용되는 처분 제한 조항이 있으면 함께 확인하도록 안내한다(AI가 인용한 조문이 판정을 뒷받침하는지는 코드가 검증하지 못하므로).
   const disposal = restrictions.filter((r) => r.대상 === "처분" && articles.has(r.조문id)).length;

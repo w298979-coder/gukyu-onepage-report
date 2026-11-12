@@ -22,7 +22,7 @@ export type PropertyKind = "토지";
 export interface Field<T> {
   value: T | null;
   source: Source;
-  /** 다른 출처의 값. 예: 브이월드와 포털의 면적이 다르면 포털 값을 여기에 둔다. */
+  /** 다른 출처의 값. 예: 포털과 브이월드의 면적이 다르면 value는 포털의 국유재산 면적, alt는 브이월드의 필지 전체 면적이다. */
   alt?: { value: T | null; source: Source };
   /** 출처가 "수정"일 때만 채운다. */
   editedBy?: string;

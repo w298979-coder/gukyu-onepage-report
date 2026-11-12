@@ -86,7 +86,7 @@ export function priceHistory(prices: LandPrice[] | null): string[] {
 }
 
 /** 과거이력 줄 중 실제 이력의 건수 */
-export const countHistory = (lines: string[]): number => lines.filter((l) => l !== NONE && !l.startsWith("수정 기록:")).length;
+export const countHistory = (lines: string[]): number => lines.filter((l) => l !== NONE).length;
 
 export function buildReport(p: Parcel): ReportView {
   const area = p.면적;
@@ -176,7 +176,7 @@ export function buildReport(p: Parcel): ReportView {
 
   // 기타 관리사항: 공시지가(최신), 용도지역, 관리 메모
   const prices = p.공시지가.value;
-  const latest = prices && prices.length ? prices[prices.length - 1] : null;
+  const latest = prices && prices.length ? prices.reduce((a, b) => (b.연도 > a.연도 ? b : a)) : null; // 가장 최근 연도
   const zones = p.용도지역.value;
   const etcRows: BasicRow[] = [
     {

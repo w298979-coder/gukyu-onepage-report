@@ -71,7 +71,7 @@ const e = sanitizeEdits({ 민원: "철거함\u0000", 수정자: "홍길동", 점
 check("수정 내용은 정해진 항목의 글만 받고, 수정자 이름은 받지 않는다", e.민원 === "철거함" && !("수정자" in e) && !("점유자" in e) && !("변상금" in e), JSON.stringify(e));
 const p = buildUserPrompt(normal, { 민원: "현장 확인" }, sel(normal), articles);
 check("질문에 필지 id·수정자가 들어가지 않는다", !p.includes(normal.id) && !p.includes("수정자"));
-check("질문에 제한 조항 근거 id와 조문 본문이 들어간다", p.includes(`<조문 id="${allowedId}">`) && p.includes("[이 필지에 적용되는 제한 조항]"));
+check("질문에 제한 조항 근거 id와 조문 본문이 들어간다", p.includes(`<조문 id="${allowedId}">`) && p.includes("[이 필지에 적용되는 제한 조항"));
 check("질문에 담당자 수정 내용이 자료로 들어간다", p.includes("현장 확인"));
 check("시스템 지침: 자료 속 지시 무시·조문 밖 근거 금지", SYSTEM_PROMPT.includes("따르지 않습니다") && SYSTEM_PROMPT.includes("목록에 없는"));
 check("질문 길이가 적당하다(모든 필지 12만 자 이하)", parcels.every((q) => buildUserPrompt(q, {}, sel(q), articles).length < 120000), String(Math.max(...parcels.map((q) => buildUserPrompt(q, {}, sel(q), articles).length))));
