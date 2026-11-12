@@ -86,8 +86,10 @@ check("전 점유자의 변상금은 점유자 이름 대신 전 점유자로 �
 
 const q = parcels.find((x) => x.지번.endsWith("가양동 174-7"));
 const rq = buildReport(q);
-check("가양동 174-7: 점유자 현○, 대부계약은 해지, 변상금은 해지 이후 부과", q.점유자.length === 1 && q.점유자[0].이름 === "현○" && q.대부계약[0].상태 === "해지" && q.변상금[0].점유자id === q.점유자[0].id && q.변상금[0].부과일 > q.대부계약[0].계약종료일, rq.penalties.summary[0]);
-check("가양동 174-7의 변상금 줄에 점유자 이름이 나온다", rq.penalties.summary[0].startsWith("현○"));
+check("가양동 174-7: 점유자 현빈, 대부계약은 해지, 변상금은 해지 이후 부과", q.점유자.length === 1 && q.점유자[0].이름 === "현빈" && q.대부계약[0].상태 === "해지" && q.변상금[0].점유자id === q.점유자[0].id && q.변상금[0].부과일 > q.대부계약[0].계약종료일, rq.penalties.summary[0]);
+check("가양동 174-7의 변상금 줄에 점유자 이름이 나온다", rq.penalties.summary[0].startsWith("현빈"));
+
+check("모든 점유자·민원인 이름이 전체 이름(가려지지 않음)이고 민원 줄에 민원인이 나온다", parcels.every((p) => p.점유자.every((o) => !o.이름.includes("○") && o.이름.length >= 2) && p.민원.every((c) => c.민원인 && !c.민원인.includes("○"))) && parcels.every((p) => buildReport(p).complaints.summary.every((l) => l === NONE || l.includes("민원인 ") || l.startsWith("외 "))));
 
 console.log(failed === 0 ? "\n모든 시험 통과" : `\n실패 ${failed}건`);
 process.exit(failed === 0 ? 0 : 1);
