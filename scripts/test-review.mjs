@@ -1,7 +1,7 @@
 // 매각가능여부 검토의 코드 부분(lib/review-core.ts) 시험. AI는 부르지 않고 가짜 답을 넣어 본다.
 // 실행: node --no-warnings scripts/test-review.mjs
 import fs from "node:fs";
-import { AiReviewSchema, buildUserPrompt, finalizeReview, sanitizeEdits, selectRestrictions, SYSTEM_PROMPT } from "../lib/review-core.ts";
+import { articleMentions, AiReviewSchema, buildUserPrompt, finalizeReview, sanitizeEdits, selectRestrictions, SYSTEM_PROMPT } from "../lib/review-core.ts";
 
 const read = (f) => JSON.parse(fs.readFileSync(`data/law/${f}.json`, "utf8"));
 const articles = new Map(["act", "decree", "rule", "farmland", "sechik", "yogang", "disposal"].flatMap((f) => read(f).articles).map((a) => [a.id, a]));
@@ -40,6 +40,12 @@ check("근거가 있는 '가능'은 그대로", r.verdict === "가능" && r.verd
 const notAllowed = RESTR.find((x) => !sel(normal).some((y) => y.조문id === x.조문id))?.조문id;
 r = finalizeReview(ok({ verdict: "가능", verdictReasons: [S("범위 밖 조문", [notAllowed])] }), normal, sel(normal), articles);
 check("이 필지에 제공하지 않은 조문의 인용은 숨긴다", !notAllowed || (r.verdictReasons.length === 0 && r.verdict === "추가 확인 필요"));
+
+// 글 속 조 번호 검사
+const aNo = articles.get(allowedId).조문번호;
+check("글 속 조 번호 추출", articleMentions("제27조제1항과 제 48 조의2, 제3조").join() === "제27조,제48조의2,제3조");
+r = finalizeReview(ok({ verdictReasons: [S(`${aNo}에 따라 제9999조도 적용된다`, [allowedId]), S(`${aNo}에 따라 제한된다`, [allowedId]), S("조 번호 언급 없음", [allowedId])] }), normal, sel(normal), articles);
+check("인용하지 않은 조 번호를 글에 적은 문장은 숨긴다", r.verdictReasons.length === 2 && r.hidden === 1, `${r.verdictReasons.length}/${r.hidden}`);
 
 // 판정 보정
 r = finalizeReview(ok({ verdict: "가능" }), normal, sel(normal), articles);

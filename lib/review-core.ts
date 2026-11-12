@@ -65,6 +65,17 @@ export interface ReviewResult {
   hidden: number;
 }
 
+/** 글 속의 "제N조" 표기를 모은다("제27조의2제1항" → "제27조의2"). */
+export function articleMentions(text: string): string[] {
+  return [...text.matchAll(/제\s?(\d+)\s?조(?:\s?의\s?(\d+))?/g)].map((m) => `제${m[1]}조${m[2] ? "의" + m[2] : ""}`);
+}
+
+/** 문장 속에서 언급한 조 번호가 모두 그 문장이 인용한 조문의 번호일 때만 true. (인용 id는 맞는데 글에는 다른 조를 적는 경우를 막는다) */
+export function mentionsOnlyCited(text: string, citations: Citation[], articles: Map<string, LawArticle>): boolean {
+  const ok = new Set(citations.flatMap((c) => articleMentions(articles.get(c.id)?.조문번호 ?? "")));
+  return articleMentions(text).every((m) => ok.has(m));
+}
+
 export function citationOf(a: LawArticle): Citation {
   return { id: a.id, label: `${a.문서명} ${a.조문번호}`, url: a.출처주소 };
 }
@@ -180,7 +191,7 @@ export function finalizeReview(
         }
       }
       const text = cleanText(s.text);
-      if (citations.length === 0 || !text) hidden++; // 근거를 확인하지 못한 문장은 보여주지 않는다
+      if (citations.length === 0 || !text || !mentionsOnlyCited(text, citations, articles)) hidden++; // 근거를 확인하지 못한 문장은 보여주지 않는다
       else out.push({ text, citations });
     }
     return out;
