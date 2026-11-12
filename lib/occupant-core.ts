@@ -166,3 +166,13 @@ export function shortLot(addr: string): string {
   const m = addr.match(/(\S+[동리가읍면])\s+(산\s*)?(\d+(?:-\d+)?)$/);
   return m ? `${m[1]} ${m[2] ? "산 " : ""}${m[3]}` : addr;
 }
+
+export const MAX_NAME_QUERY = 20;
+
+/** 입력한 글로 점유자 이름을 찾는다. 이름이 똑같은 것이 있으면 그것만, 없으면 입력이 이름에 들어 있는 것들(공백 무시). */
+export function matchOccupantNames(names: string[], q: string): string[] {
+  const query = q.replace(/\s+/g, "").slice(0, MAX_NAME_QUERY);
+  if (query === "") return [];
+  const exact = names.filter((n) => n === query);
+  return exact.length ? exact : names.filter((n) => n.includes(query));
+}
