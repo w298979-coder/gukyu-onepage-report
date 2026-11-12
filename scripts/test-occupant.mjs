@@ -1,6 +1,6 @@
 // 점유자별 리포트(lib/occupant-core.ts) 시험. 실행: node --no-warnings scripts/test-occupant.mjs
 import fs from "node:fs";
-import { buildOccupantReport, listOccupants, shortLot } from "../lib/occupant-core.ts";
+import { buildOccupantReport, listOccupants, matchOccupantNames, shortLot } from "../lib/occupant-core.ts";
 
 const parcels = JSON.parse(fs.readFileSync("data/parcels.json", "utf8")).parcels;
 const lawIds = new Set(["act", "decree", "rule", "farmland", "sechik", "yogang", "disposal"].flatMap((f) => JSON.parse(fs.readFileSync(`data/law/${f}.json`, "utf8")).articles).map((a) => a.id));
@@ -39,6 +39,12 @@ lease.계약종료일 = "2030-01-10";
 const r3 = buildOccupantReport(fake, name, TODAY);
 check("만료가 멀면 만료 임박 문장이 없다", !r3.cautions.some((c) => c.text.startsWith("[대부계약]")));
 check("'무계약' 표현은 쓰지 않고 '무단점유'로 쓴다", reports.every((r) => [...r.cautions, ...r.plan].every((c) => !c.text.includes("무계약"))));
+const names = list.map((x) => x.이름);
+check("이름이 똑같으면 그 점유자만", matchOccupantNames(names, "이서준").join() === "이서준");
+check("일부만 입력하면 들어 있는 이름을 모두", matchOccupantNames(["김도윤", "김민서", "박주원"], "김").join() === "김도윤,김민서");
+check("공백은 무시하고 앞뒤 공백도 쓸 수 있다", matchOccupantNames(names, " 이 서 준 ").join() === "이서준");
+check("빈 입력·없는 이름은 빈 목록", matchOccupantNames(names, "").length === 0 && matchOccupantNames(names, "   ").length === 0 && matchOccupantNames(names, "없는사람").length === 0);
+check("너무 긴 입력도 안전하게 처리", matchOccupantNames(names, "가".repeat(500)).length === 0);
 check("지번 줄임", shortLot("대전광역시 동구 가양동 174-59") === "가양동 174-59" && shortLot("대전광역시 대덕구 갈전동 산 50-3") === "갈전동 산 50-3");
 
 console.log(failed === 0 ? "\n모든 시험 통과" : `\n실패 ${failed}건`);

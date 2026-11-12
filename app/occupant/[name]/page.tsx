@@ -2,8 +2,7 @@
 import Link from "next/link";
 import { connection } from "next/server";
 import { Suspense } from "react";
-import OccupantReport from "@/app/components/OccupantReport";
-import PrintButton from "@/app/components/PrintButton";
+import OccupantView from "@/app/components/OccupantView";
 import { getOccupantReportView } from "@/lib/occupants";
 
 async function Section({ params }: { params: PageProps<"/occupant/[name]">["params"] }) {
@@ -27,15 +26,7 @@ async function Section({ params }: { params: PageProps<"/occupant/[name]">["para
       </header>
       {report ? (
         <>
-          <div className="flex flex-wrap items-end gap-x-5 gap-y-1">
-            <p className="text-5xl font-extrabold tracking-tight text-zinc-900" aria-label={`점유자 성명 ${report.이름}`}>
-              {report.이름}
-            </p>
-            <p className="pb-1 text-sm text-zinc-600">
-              점유자 · 점유 필지 {report.rows.length}건 · 현재 기준 <PrintButton />
-            </p>
-          </div>
-          <OccupantReport report={report} />
+          <OccupantView report={report} />
         </>
       ) : (
         <p role="alert" className="max-w-3xl rounded-md border border-zinc-300 bg-white px-4 py-3">

@@ -1,7 +1,7 @@
 // Design Ref: §2 — 점유자별 리포트의 서버 쪽: 필지 데이터에서 점유자별로 묶고, 근거 조문 id를 조문 이름·번호·주소로 바꾼다.
 import "server-only";
 import { ARTICLES } from "./law";
-import { buildOccupantReport, listOccupants, type OccupantListItem, type OccupantReport, type Sentence } from "./occupant-core";
+import { buildOccupantReport, listOccupants, matchOccupantNames, type OccupantListItem, type OccupantReport, type Sentence } from "./occupant-core";
 import { getParcels } from "./parcels";
 
 export interface CitedSentence {
@@ -25,4 +25,12 @@ export function getOccupantList(): OccupantListItem[] {
 export function getOccupantReportView(name: string): OccupantReportView | null {
   const r = buildOccupantReport(getParcels(), name, new Date().toISOString().slice(0, 10));
   return r ? { ...r, cautions: r.cautions.map(cite), plan: r.plan.map(cite) } : null;
+}
+
+/** 입력한 글과 맞는 점유자 이름들 */
+export function searchOccupantNames(q: string): string[] {
+  return matchOccupantNames(
+    getOccupantList().map((o) => o.이름),
+    q,
+  );
 }
