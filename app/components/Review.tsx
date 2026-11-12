@@ -300,7 +300,9 @@ export function ManagementCard({
   restrictions,
   missing,
   memo,
+  related,
 }: {
+  related: RelatedResult;
   restrictions: RestrictionView[];
   missing: { 문서명: string; 사유: string }[];
   /** 기타 관리 메모(가상). AI 검토가 끝나기 전에는 이 내용을 보여 준다 */
@@ -345,6 +347,27 @@ export function ManagementCard({
 
   return (
     <ReportCard title="관리방안" detail={detail}>
+      {/* 매각가능여부와 사유(간결) */}
+      <p className="mb-2 border-b border-zinc-200 pb-2 text-sm">
+        <span className="font-semibold text-zinc-700">매각가능여부</span>{" "}
+        {result ? (
+          <>
+            <span className={`rounded px-1.5 py-0.5 font-semibold ${VERDICT_STYLE[result.verdict]}`}>{result.verdict}</span>
+            <span className="ml-1 break-words">
+              {result.verdictReasons[0]?.text ?? result.verdictNote ?? "근거 자료에서 확인되지 않았습니다"}
+              {result.verdictReasons[0] && <Cites s={result.verdictReasons[0]} />}
+            </span>
+          </>
+        ) : (
+          <span className="text-zinc-500">{state.kind === "error" ? "AI 검토를 불러오지 못했습니다" : "AI 검토 중…"}</span>
+        )}
+        {related.overall !== "확인된 제한 없음" && (
+          <span className="mt-0.5 block text-xs">
+            <span className={`rounded px-1 py-0.5 font-semibold ${RELATED_STYLE[related.overall]}`}>관계법령 {related.overall}</span>
+            <span className="ml-1 text-zinc-600">{related.items.filter((i) => i.판정 !== "제한 확인되지 않음").map((i) => i.구역.join("·")).join(", ")}</span>
+          </span>
+        )}
+      </p>
       {result ? (
         result.management.length === 0 ? (
           <p className="text-zinc-500">근거 자료에서 확인되지 않았습니다</p>

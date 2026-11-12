@@ -117,7 +117,7 @@ export default function Report({ parcel }: { parcel: Parcel }) {
         <Lines lines={v.complaints.summary} />
       </ReportCard>
 
-      <ManagementCard restrictions={restrictions} missing={MISSING_DOCS} memo={parcel.기타관리사항.value} />
+      <ManagementCard restrictions={restrictions} missing={MISSING_DOCS} memo={parcel.기타관리사항.value} related={related} />
     </div>
     </ReviewProvider>
   );

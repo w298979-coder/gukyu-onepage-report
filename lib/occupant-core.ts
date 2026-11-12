@@ -123,39 +123,39 @@ export function buildOccupantReport(parcels: Parcel[], name: string, today: stri
 
   if (unpaid.length > 0) {
     cautions.push({
-      text: `[변상금] 미납·일부납부 변상금 ${unpaid.length}건(부과액 합계 ${won(totals.unpaidAmount)})이 있습니다. 납기 후에는 연체료 징수와 강제징수 대상이 됩니다.`,
+      text: `[변상금] 미납 ${unpaid.length}건·${won(totals.unpaidAmount)} → 연체료·강제징수 대상`,
       articleIds: ["국유재산법-제72조", "국유재산법-제73조"],
     });
   }
   if (noLease.length > 0) {
     cautions.push({
-      text: `[점유] 유효한 대부계약 없이 점유 중인 필지가 ${noLease.length}건(${noLease.map((r) => shortLot(r.parcel.지번)).join(", ")})입니다. 사용료·대부료의 120% 변상금 부과 대상이며 계속 점유하면 철거 등 조치도 가능합니다.`,
+      text: `[점유] 무계약 ${noLease.length}건(${noLease.map((r) => shortLot(r.parcel.지번)).join(", ")}) → 변상금 120%·철거 가능`,
       articleIds: ["국유재산법-제72조", "국유재산법-제74조"],
     });
   }
   if (expiring.length > 0) {
     const first = expiring.sort((a, b) => a.d - b.d)[0];
     cautions.push({
-      text: `[대부계약] ${first.r.parcel.지번 ? shortLot(first.r.parcel.지번) : ""} 계약이 ${first.l.계약종료일}에 끝납니다(D-${first.d}${expiring.length > 1 ? `, 만료 임박 ${expiring.length}건` : ""}). 갱신 신청은 대부기간 종료 1개월 전까지 해야 하고, 계약 조건 위반이 있으면 갱신할 수 없습니다.`,
+      text: `[대부계약] ${shortLot(first.r.parcel.지번)} 만료 D-${first.d}(${first.l.계약종료일})${expiring.length > 1 ? ` 외 ${expiring.length - 1}건` : ""} → 1개월 전 갱신 신청`,
       articleIds: ["국유재산법-제46조", "국유재산법 시행령-제50조"],
     });
   }
   if (cautions.length === 0) {
-    cautions.push({ text: "[점검] 미납 변상금, 무계약 점유, 만료 임박 계약이 확인되지 않았습니다. 대부계약 이행 여부를 정기적으로 점검하세요.", articleIds: ["국유재산법-제47조"] });
+    cautions.push({ text: "[점검] 특이사항 없음 → 계약 이행 정기 점검", articleIds: ["국유재산법-제47조"] });
   }
 
   // ---- 관리방안(규칙): 효율적인 순서 ----
   if (unpaid.length > 0) {
-    plan.push({ text: "미납 변상금부터 납부를 독촉하고, 50만원 초과분은 분할납부를 안내한 뒤 체납 시 연체료·강제징수를 진행합니다.", articleIds: ["국유재산법 시행령-제71조", "국유재산법-제73조"] });
+    plan.push({ text: "미납 변상금 독촉 → 분할납부 안내 → 체납 시 강제징수", articleIds: ["국유재산법 시행령-제71조", "국유재산법-제73조"] });
   }
   if (noLease.length > 0) {
-    plan.push({ text: "무계약 점유 필지는 대부계약 체결 가능 여부를 먼저 보고, 어렵다면 점유 정리(철거 등)를 진행합니다.", articleIds: ["국유재산법-제72조", "국유재산법-제74조"] });
+    plan.push({ text: "무계약 점유 → 대부계약 검토, 불가 시 철거", articleIds: ["국유재산법-제72조", "국유재산법-제74조"] });
   }
   if (expiring.length > 0) {
-    plan.push({ text: "만료 임박 계약은 종료 1개월 전까지 갱신 신청을 받고 갱신 불가 사유를 확인합니다.", articleIds: ["국유재산법-제46조", "국유재산법 시행령-제50조"] });
+    plan.push({ text: "만료 임박 계약 → 1개월 전 갱신 신청 안내", articleIds: ["국유재산법-제46조", "국유재산법 시행령-제50조"] });
   }
   if (plan.length === 0) {
-    plan.push({ text: "현재 대부계약이 정상 이행 중이므로 계약 종료 시점과 사용료 납부를 정기 점검합니다.", articleIds: ["국유재산법-제47조"] });
+    plan.push({ text: "정상 이행 → 계약 종료·사용료 납부 정기 점검", articleIds: ["국유재산법-제47조"] });
   }
 
   return { 이름: name, rows, totals, cautions, plan };
