@@ -2,6 +2,7 @@
 // 각 칸은 상태(무단점유·대부 유효·미납·미완료 등)가 급한 것부터 정렬하고 상태를 색 표시로 붙인다.
 import Link from "next/link";
 import type { ReactNode } from "react";
+import MoreItems from "./MoreItems";
 import ReportCard, { DetailLines } from "./ReportCard";
 import SourceBadge from "./SourceBadge";
 import { fmtArea, fmtDate, fmtWon, NONE, oneLine } from "@/lib/report";
@@ -47,9 +48,10 @@ interface Item {
   /** 앞에 링크로 만들 글(필지 지번) */
   link?: string;
 }
-function ItemList({ items, max = 4, emptyText = NONE, single = false }: { items: Item[]; max?: number; emptyText?: string; single?: boolean }) {
+function ItemList({ items, title, detail, max = 4, emptyText = NONE, single = false }: { items: Item[]; title: string; detail: ReactNode; max?: number; emptyText?: string; single?: boolean }) {
   if (items.length === 0) return <p className="text-zinc-500">{emptyText}</p>;
   return (
+    <>
     <ul className="flex flex-col gap-1.5">
       {items.slice(0, max).map((it) => (
         <li key={it.key} className={single ? "truncate text-sm" : "line-clamp-3 break-words"} title={single ? `${it.link ? shortLot(it.link) : ""}${it.text}` : undefined}>
@@ -66,8 +68,11 @@ function ItemList({ items, max = 4, emptyText = NONE, single = false }: { items:
           )}
         </li>
       ))}
-      {items.length > max && <li className="text-zinc-500">외 {items.length - max}건 (세부확인)</li>}
     </ul>
+    <MoreItems title={title} count={items.length - max}>
+      {detail}
+    </MoreItems>
+    </>
   );
 }
 const lines = (items: Item[]) => (items.length === 0 ? [NONE] : items.map((it) => `[${it.chip}] ${it.link ? shortLot(it.link) : ""}${it.text}`));
@@ -133,91 +138,99 @@ export default function OccupantReport({ report }: { report: OccupantReportView 
   const openComplaints = complaints.filter((c) => c.chip !== "처리완료").length;
 
   return (
-    <div className="grid min-h-0 flex-1 grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4 xl:grid-rows-2 print:grid-cols-4 print:grid-rows-2" aria-label={`${report.이름} 점유자별 리포트`}>
-      <ReportCard title="요약" source="가상">
-        <dl className="grid grid-cols-[6rem_1fr] gap-x-2 gap-y-1.5">
-          <dt className="text-zinc-500">점유 필지</dt>
-          <dd>
-            {totals.parcels}건 · 점유면적 합계 {fmtArea(Math.round(totals.area * 10) / 10)}
-            <span className={parcels.some((p) => p.chip === "무단점유") ? "block font-medium text-red-700" : "block text-zinc-500"}>
-              무단점유 {parcels.filter((p) => p.chip === "무단점유").length}건
-            </span>
-          </dd>
-          <dt className="text-zinc-500">대부계약</dt>
-          <dd>
-            유효 {totals.validLeases}건 · 연 사용료 합계 {fmtWon(totals.leaseFee)}
-          </dd>
-          <dt className="text-zinc-500">변상금</dt>
-          <dd>
-            {totals.penalties}건 · 부과액 {fmtWon(totals.penaltyAmount)}
-            <span className={totals.unpaidCount ? "block font-medium text-red-700" : "block text-zinc-500"}>
-              미납·일부납부 {totals.unpaidCount}건{totals.unpaidCount ? ` (${fmtWon(totals.unpaidAmount)})` : ""}
-            </span>
-          </dd>
-          <dt className="text-zinc-500">민원</dt>
-          <dd>
-            점유 필지 기준 {complaints.length}건
-            <span className={openComplaints ? "block font-medium text-red-700" : "block text-zinc-500"}>미완료 {openComplaints}건</span>
-          </dd>
-        </dl>
-      </ReportCard>
+    <div className="grid min-h-0 flex-1 grid-cols-1 items-start gap-3 md:grid-cols-2 xl:grid-cols-4 print:grid-cols-4" aria-label={`${report.이름} 점유자별 리포트`}>
+      <div className="flex min-w-0 flex-col gap-3">
+        <ReportCard title="요약" source="가상">
+          <dl className="grid grid-cols-[6rem_1fr] gap-x-2 gap-y-1.5">
+            <dt className="text-zinc-500">점유 필지</dt>
+            <dd>
+              {totals.parcels}건 · 점유면적 합계 {fmtArea(Math.round(totals.area * 10) / 10)}
+              <span className={parcels.some((p) => p.chip === "무단점유") ? "block font-medium text-red-700" : "block text-zinc-500"}>
+                무단점유 {parcels.filter((p) => p.chip === "무단점유").length}건
+              </span>
+            </dd>
+            <dt className="text-zinc-500">대부계약</dt>
+            <dd>
+              유효 {totals.validLeases}건 · 연 사용료 합계 {fmtWon(totals.leaseFee)}
+            </dd>
+            <dt className="text-zinc-500">변상금</dt>
+            <dd>
+              {totals.penalties}건 · 부과액 {fmtWon(totals.penaltyAmount)}
+              <span className={totals.unpaidCount ? "block font-medium text-red-700" : "block text-zinc-500"}>
+                미납·일부납부 {totals.unpaidCount}건{totals.unpaidCount ? ` (${fmtWon(totals.unpaidAmount)})` : ""}
+              </span>
+            </dd>
+            <dt className="text-zinc-500">민원</dt>
+            <dd>
+              점유 필지 기준 {complaints.length}건
+              <span className={openComplaints ? "block font-medium text-red-700" : "block text-zinc-500"}>미완료 {openComplaints}건</span>
+            </dd>
+          </dl>
+        </ReportCard>
 
-      <ReportCard title="점유 필지" count={`${rows.length}건`} source="가상" detail={<DetailLines lines={lines(parcels)} />}>
-        <ItemList items={parcels} />
-      </ReportCard>
-
-      <ReportCard title="대부계약" count={leases.length ? `${leases.length}건` : NONE} source={leases.length ? "가상" : null} detail={<DetailLines lines={lines(leases)} />}>
-        <ItemList items={leases} />
-      </ReportCard>
-
-      <ReportCard
-        title="변상금"
-        count={pens.length ? `${pens.length}건${totals.unpaidCount ? ` · 미납 ${totals.unpaidCount}` : ""}` : NONE}
-        source={pens.length ? "가상" : null}
-        detail={<DetailLines lines={lines(pens)} />}
-      >
-        <ItemList items={pens} />
-      </ReportCard>
-
-      <ReportCard title="민원 (점유 필지)" count={complaints.length ? `${complaints.length}건${openComplaints ? ` · 미완료 ${openComplaints}` : ""}` : NONE} source={complaints.length ? "가상" : null} detail={<DetailLines lines={fullComplaints} />}>
-        <ItemList items={complaints} single />
-      </ReportCard>
-
-      <ReportCard title="주의사항" count={`${report.cautions.length}건`}>
-        <ul className="flex flex-col gap-1.5 text-sm">
-          {report.cautions.map((c, i) => (
-            <li key={i} className="break-words">
-              {c.text}
-              <Cites s={c} />
+        <ReportCard title="안내">
+          <ul className="flex list-disc flex-col gap-1 pl-4 text-sm text-zinc-700">
+            <li>
+              <SourceBadge source="가상" /> 점유자·민원인 이름은 모두 지어낸 가상 이름(실존 인물과 무관)이며, <b>같은 이름을 같은 점유자</b>로 묶었습니다.
             </li>
-          ))}
-        </ul>
-      </ReportCard>
-
-      <ReportCard title="관리방안">
-        <ol className="flex list-decimal flex-col gap-1.5 pl-4 text-sm">
-          {report.plan.map((c, i) => (
-            <li key={i} className="break-words">
-              {c.text}
-              <Cites s={c} />
+            <li>
+              각 칸은 <Chip tone="red">무단점유·미납·미완료</Chip>
+              <Chip tone="amber">일부납부·처리중</Chip>
+              <Chip tone="green">대부 유효·완납·처리완료</Chip> 순으로 급한 것부터 정렬했습니다.
             </li>
-          ))}
-        </ol>
-      </ReportCard>
+            <li>주의사항·관리방안은 AI가 아니라 코드의 규칙(미납 변상금, 무단점유, 만료 임박 계약)으로 만들며 근거 조문을 함께 표시합니다. 민원은 필지 기준 자료입니다. 담당자의 판단을 돕는 참고용입니다.</li>
+          </ul>
+        </ReportCard>
+      </div>
 
-      <ReportCard title="안내">
-        <ul className="flex list-disc flex-col gap-1 pl-4 text-sm text-zinc-700">
-          <li>
-            <SourceBadge source="가상" /> 점유자·민원인 이름은 모두 지어낸 가상 이름(실존 인물과 무관)이며, <b>같은 이름을 같은 점유자</b>로 묶었습니다.
-          </li>
-          <li>
-            각 칸은 <Chip tone="red">무단점유·미납·미완료</Chip>
-            <Chip tone="amber">일부납부·처리중</Chip>
-            <Chip tone="green">대부 유효·완납·처리완료</Chip> 순으로 급한 것부터 정렬했습니다.
-          </li>
-          <li>주의사항·관리방안은 AI가 아니라 코드의 규칙(미납 변상금, 무단점유, 만료 임박 계약)으로 만들며 근거 조문을 함께 표시합니다. 민원은 필지 기준 자료입니다. 담당자의 판단을 돕는 참고용입니다.</li>
-        </ul>
-      </ReportCard>
+      <div className="flex min-w-0 flex-col gap-3">
+        <ReportCard title="점유 필지" count={`${rows.length}건`} source="가상" detail={<DetailLines lines={lines(parcels)} />}>
+          <ItemList items={parcels} title="점유 필지" detail={<DetailLines lines={lines(parcels)} />} />
+        </ReportCard>
+
+        <ReportCard title="민원 (점유 필지)" count={complaints.length ? `${complaints.length}건${openComplaints ? ` · 미완료 ${openComplaints}` : ""}` : NONE} source={complaints.length ? "가상" : null} detail={<DetailLines lines={fullComplaints} />}>
+          <ItemList items={complaints} title="민원 (점유 필지)" detail={<DetailLines lines={fullComplaints} />} single />
+        </ReportCard>
+      </div>
+
+      <div className="flex min-w-0 flex-col gap-3">
+        <ReportCard title="대부계약" count={leases.length ? `${leases.length}건` : NONE} source={leases.length ? "가상" : null} detail={<DetailLines lines={lines(leases)} />}>
+          <ItemList items={leases} title="대부계약" detail={<DetailLines lines={lines(leases)} />} />
+        </ReportCard>
+
+        <ReportCard
+          title="변상금"
+          count={pens.length ? `${pens.length}건${totals.unpaidCount ? ` · 미납 ${totals.unpaidCount}` : ""}` : NONE}
+          source={pens.length ? "가상" : null}
+          detail={<DetailLines lines={lines(pens)} />}
+        >
+          <ItemList items={pens} title="변상금" detail={<DetailLines lines={lines(pens)} />} />
+        </ReportCard>
+      </div>
+
+      <div className="flex min-w-0 flex-col gap-3">
+        <ReportCard title="주의사항" count={`${report.cautions.length}건`}>
+          <ul className="flex flex-col gap-1.5 text-sm">
+            {report.cautions.map((c, i) => (
+              <li key={i} className="break-words">
+                {c.text}
+                <Cites s={c} />
+              </li>
+            ))}
+          </ul>
+        </ReportCard>
+
+        <ReportCard title="관리방안">
+          <ol className="flex list-decimal flex-col gap-1.5 pl-4 text-sm">
+            {report.plan.map((c, i) => (
+              <li key={i} className="break-words">
+                {c.text}
+                <Cites s={c} />
+              </li>
+            ))}
+          </ol>
+        </ReportCard>
+      </div>
     </div>
   );
 }

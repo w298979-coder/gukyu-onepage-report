@@ -23,7 +23,10 @@ export interface BasicRow {
 export interface ListCard {
   /** 카드 머리의 짧은 건수 표시 (예: "2건") */
   count: string;
+  /** 최근 것 위주로 줄인 한 줄 요약(MAX_SUMMARY건까지) */
   summary: string[];
+  /** 요약에 못 담은 건수("추가사항" 버튼에 쓴다) */
+  more: number;
   detail: string[];
   /** "과거이력" 버튼에서 보여 줄 줄들. 이력이 없으면 ["해당 없음"] */
   history: string[];
@@ -45,12 +48,14 @@ export interface ReportView {
   complaints: ListCard;
 }
 
-const MAX_SUMMARY = 3;
+export const MAX_SUMMARY = 3;
 
-function limit(lines: string[], total: number): string[] {
-  if (lines.length === 0) return [NONE];
-  return total > MAX_SUMMARY ? [...lines.slice(0, MAX_SUMMARY), `외 ${total - MAX_SUMMARY}건 (세부확인)`] : lines;
+/** 한 줄 요약은 앞의 MAX_SUMMARY건만 보여 준다(목록은 이미 최근 것이 앞에 오도록 정렬돼 있다). 나머지는 "추가사항" 버튼으로 본다. */
+function limit(lines: string[]): string[] {
+  return lines.length === 0 ? [NONE] : lines.slice(0, MAX_SUMMARY);
 }
+const moreOf = (total: number) => Math.max(0, total - MAX_SUMMARY);
+const byDesc = (a: string | null, b: string | null) => (b ?? "").localeCompare(a ?? "");
 
 function ownerName(occ: Occupant[], id: string): string {
   return occ.find((o) => o.id === id)?.이름 ?? "전 점유자(미상)";
@@ -151,8 +156,15 @@ export function buildReport(p: Parcel): ReportView {
     ...basic.filter((r) => r.note).map((r) => `${r.label}: ${r.note}`),
   ];
 
+  // 목록은 최근 것이 앞에 오도록 정렬한다(점유자: 점유 시작 최근순, 대부계약: 유효 먼저 → 시작 최근순, 변상금: 부과 최근순, 민원: 접수 최근순)
+  const occs = [...p.점유자].sort((a, b) => byDesc(a.점유시작일, b.점유시작일));
+  const leaseRank = { 유효: 0, 만료: 1, 해지: 2 } as const;
+  const leasesSorted = [...p.대부계약].sort((a, b) => leaseRank[a.상태] - leaseRank[b.상태] || byDesc(a.계약시작일, b.계약시작일));
+  const pensSorted = [...p.변상금].sort((a, b) => byDesc(a.부과일, b.부과일));
+  const complaintsSorted = [...p.민원].sort((a, b) => byDesc(a.접수일, b.접수일));
+
   // 점유자 + 점유자별 대부계약
-  const occLines = p.점유자.map((o) => {
+  const occLines = occs.map((o) => {
     const mine = p.대부계약.filter((l) => l.점유자id === o.id);
     return `${o.이름} · 점유 ${fmtArea(o.점유면적)} · ${fmtDate(o.점유시작일)}부터${o.비고 ? ` · ${o.비고}` : ""}${
       mine.length ? ` · 대부계약 ${mine.length}건` : " · 대부계약 없음"
@@ -160,8 +172,9 @@ export function buildReport(p: Parcel): ReportView {
   });
   const occupants: ListCard = {
     count: p.점유자.length === 0 ? NONE : `${p.점유자.length}명`,
-    summary: limit(occLines, p.점유자.length),
-    detail: p.점유자.length === 0 ? [NONE] : p.점유자.flatMap((o) => {
+    summary: limit(occLines),
+    more: moreOf(occLines.length),
+    detail: p.점유자.length === 0 ? [NONE] : occs.flatMap((o) => {
       const mine = p.대부계약.filter((l) => l.점유자id === o.id);
       return [
         `${o.이름}: 점유면적 ${fmtArea(o.점유면적)}, 점유 시작 ${fmtDate(o.점유시작일)}, 비고 ${text(o.비고)}`,
@@ -173,32 +186,35 @@ export function buildReport(p: Parcel): ReportView {
     source: p.점유자.length === 0 ? null : "가상",
   };
 
-  const leaseLines = p.대부계약.map((l) => leaseLine(l, ownerName(p.점유자, l.점유자id)));
+  const leaseLines = leasesSorted.map((l) => leaseLine(l, ownerName(p.점유자, l.점유자id)));
   const leases: ListCard = {
     count: p.대부계약.length === 0 ? NONE : `${p.대부계약.length}건`,
-    summary: limit(leaseLines, p.대부계약.length),
+    summary: limit(leaseLines),
+    more: moreOf(leaseLines.length),
     detail: p.대부계약.length === 0 ? [NONE] : leaseLines,
     history: [...pastHistory(p, "대부계약")],
     historyCount: countHistory(pastHistory(p, "대부계약")),
     source: p.대부계약.length === 0 ? null : "가상",
   };
 
-  const penLines = p.변상금.map((x) => penaltyLine(x, ownerName(p.점유자, x.점유자id)));
+  const penLines = pensSorted.map((x) => penaltyLine(x, ownerName(p.점유자, x.점유자id)));
   const unpaid = p.변상금.filter((x) => x.납부상태 !== "완납").length;
   const penalties: ListCard = {
     count: p.변상금.length === 0 ? NONE : `${p.변상금.length}건${unpaid ? ` · 미완납 ${unpaid}` : ""}`,
-    summary: limit(penLines, p.변상금.length),
+    summary: limit(penLines),
+    more: moreOf(penLines.length),
     detail: p.변상금.length === 0 ? [NONE] : penLines,
     history: [...pastHistory(p, "변상금")],
     historyCount: countHistory(pastHistory(p, "변상금")),
     source: p.변상금.length === 0 ? null : "가상",
   };
 
-  const cLines = p.민원.map(complaintLine);
+  const cLines = complaintsSorted.map(complaintLine);
   const open = p.민원.filter((c) => c.처리상태 !== "완료").length;
   const complaints: ListCard = {
     count: p.민원.length === 0 ? NONE : `${p.민원.length}건${open ? ` · 미완료 ${open}` : ""}`,
-    summary: limit(p.민원.map(complaintSummaryLine), p.민원.length),
+    summary: limit(complaintsSorted.map(complaintSummaryLine)),
+    more: moreOf(complaintsSorted.length),
     detail: p.민원.length === 0 ? [NONE] : cLines,
     history: [...pastHistory(p, "민원")],
     historyCount: countHistory(pastHistory(p, "민원")),

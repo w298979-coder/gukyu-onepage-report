@@ -8,6 +8,7 @@ import { getEdits, parseStore } from "@/lib/edits";
 import type { RelatedOverall, RelatedResult } from "@/lib/related-core";
 import type { RestrictionView, ReviewResult, ReviewSentence } from "@/lib/review-core";
 import { useEditsRaw } from "./Edits";
+import MoreItems from "./MoreItems";
 import ReportCard from "./ReportCard";
 import SourceBadge from "./SourceBadge";
 
@@ -372,14 +373,19 @@ export function ManagementCard({
         result.management.length === 0 ? (
           <p className="text-zinc-500">근거 자료에서 확인되지 않았습니다</p>
         ) : (
-          <ol className="flex list-decimal flex-col gap-1.5 pl-5">
-            {result.management.slice(0, 5).map((m, i) => (
-              <li key={i} className="break-words">
-                {m.text}
-                <Cites s={m} />
-              </li>
-            ))}
-          </ol>
+          <>
+            <ol className="flex list-decimal flex-col gap-1.5 pl-5">
+              {result.management.slice(0, 4).map((m, i) => (
+                <li key={i} className="break-words">
+                  {m.text}
+                  <Cites s={m} />
+                </li>
+              ))}
+            </ol>
+            <MoreItems title="관리방안" count={result.management.length - 4}>
+              <SentenceList title="관리방안 (전체)" items={result.management} />
+            </MoreItems>
+          </>
         )
       ) : (
         <div className="text-sm">
