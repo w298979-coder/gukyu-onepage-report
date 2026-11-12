@@ -42,7 +42,7 @@ function ZoneValue({ zones, related }: { zones: string[]; related: RelatedResult
         <span key={z.name}>
           {i > 0 && ", "}
           <span className={z.tag ? "font-medium" : ""}>{z.name}</span>
-          {z.tag && <span className={`ml-1 rounded px-1 py-0.5 align-middle text-xs font-semibold leading-none ${TAG[z.tag].cls}`}>{TAG[z.tag].text}</span>}
+          {z.tag && <span className={`ml-1 rounded px-1 py-0.5 align-middle text-[13px] font-semibold leading-none ${TAG[z.tag].cls}`}>{TAG[z.tag].text}</span>}
         </span>
       ))}
       {hidden > 0 && <span className="text-zinc-500"> 외 {hidden}</span>}
@@ -63,7 +63,7 @@ function Rows({ rows, zones, related }: { rows: BasicRow[]; zones?: string[]; re
               <span className={r.value === "해당 없음" ? "text-zinc-500" : ""}>{r.value}</span>
             )}
             <SourceBadge source={r.source} />
-            {r.note && <span className="mt-0.5 block text-xs text-zinc-500">{r.note}</span>}
+            {r.note && <span className="mt-0.5 block text-[13px] text-zinc-500">{r.note}</span>}
           </dd>
         </div>
       ))}
@@ -83,8 +83,8 @@ export default function Report({ parcel }: { parcel: Parcel }) {
   );
   return (
     <ReviewProvider parcelId={parcel.id}>
-    <div className="grid min-h-0 flex-1 grid-cols-1 items-start gap-3 md:grid-cols-2 xl:grid-cols-4 print:grid-cols-4" aria-label={`${v.title} 종합현황`}>
-      <div className="flex min-w-0 flex-col gap-3">
+    <div className="grid min-h-0 flex-1 grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4 xl:grid-rows-1 print:grid-cols-4 print:grid-rows-1" aria-label={`${v.title} 종합현황`}>
+      <div className="flex min-h-0 min-w-0 flex-col gap-3 [&>section]:min-h-0 [&>section]:flex-1">
         <ReportCard title="기본 정보" detail={<DetailLines lines={detailLines} />} history={<DetailLines lines={v.basicHistory} />} historySource="브이월드" historyCount={v.basicHistoryCount}>
           <div className="mb-3 grid grid-cols-2 gap-2">
             <PhotoFrame title="현황사진" source="가상 이미지(국유재산포털에 사진 자료 없음)">
@@ -95,14 +95,14 @@ export default function Report({ parcel }: { parcel: Parcel }) {
                 <AerialPhoto parcelId={parcel.id} jibun={parcel.지번} className="w-full" />
               </PhotoFrame>
             ) : (
-              <p className="text-sm text-zinc-500">항공사진: 해당 없음</p>
+              <p className="text-[15px] text-zinc-500">항공사진: 해당 없음</p>
             )}
           </div>
           <Rows rows={v.basic} zones={parcel.용도지역.value ?? []} related={related} />
         </ReportCard>
       </div>
 
-      <div className="flex min-w-0 flex-col gap-3">
+      <div className="flex min-h-0 min-w-0 flex-col gap-3 [&>section]:min-h-0 [&>section]:flex-1">
         <ReportCard title="점유자 현황" count={v.occupants.count} source={v.occupants.source} detail={<DetailLines lines={v.occupants.detail} />} history={<><DetailLines lines={v.occupants.history} /><EditHistory parcelId={parcel.id} item="점유자" /></>} historyCount={v.occupants.historyCount} historySource="가상" footerLeft={<OccupantReportButton names={[...new Set(parcel.점유자.map((o) => o.이름))]} />} edit={{ parcelId: parcel.id, item: "점유자", original: v.occupants.detail.join("\n") }}>
           <Lines lines={v.occupants.summary} />
           <MoreItems title="점유자 현황" count={v.occupants.more}>
@@ -118,7 +118,7 @@ export default function Report({ parcel }: { parcel: Parcel }) {
         </ReportCard>
       </div>
 
-      <div className="flex min-w-0 flex-col gap-3">
+      <div className="flex min-h-0 min-w-0 flex-col gap-3 [&>section]:min-h-0 [&>section]:flex-1">
         <ReportCard title="대부계약 현황" count={v.leases.count} source={v.leases.source} detail={<DetailLines lines={v.leases.detail} />} history={<><DetailLines lines={v.leases.history} /><EditHistory parcelId={parcel.id} item="대부계약" /></>} historyCount={v.leases.historyCount} historySource="가상" edit={{ parcelId: parcel.id, item: "대부계약", original: v.leases.detail.join("\n") }}>
           <Lines lines={v.leases.summary} />
           <MoreItems title="대부계약 현황" count={v.leases.more}>
@@ -134,7 +134,7 @@ export default function Report({ parcel }: { parcel: Parcel }) {
         </ReportCard>
       </div>
 
-      <div className="flex min-w-0 flex-col gap-3">
+      <div className="flex min-h-0 min-w-0 flex-col gap-3 [&>section]:min-h-0 [&>section]:flex-1">
         <VerdictCard related={related} />
 
         <ManagementCard restrictions={restrictions} missing={MISSING_DOCS} memo={parcel.기타관리사항.value} related={related} />

@@ -68,17 +68,36 @@ export default function SitePhoto({ parcel, className }: { parcel: Parcel; class
   switch (scene) {
     case "house": {
       // 담장과 단독주택
+      // 주택가 골목의 단독주택(대지): 양옆 이웃집, 대문·담장, 골목길, 승용차
       items.push(rect(0, horizon + 30, W, H - horizon - 30, "#8e9a7e"));
-      const hx = 120 + r() * 120;
-      const hw = 150 + r() * 40;
-      items.push(rect(hx, horizon - 5, hw, 80, "#e6dcc8"));
-      items.push(<polygon key={key()} points={`${hx - 12},${horizon - 5} ${hx + hw / 2},${horizon - 55} ${hx + hw + 12},${horizon - 5}`} fill={r() < 0.5 ? "#b5523b" : "#4f6f8a"} />);
-      items.push(rect(hx + 20, horizon + 25, 26, 50, "#6b4a32"));
-      items.push(rect(hx + hw - 70, horizon + 20, 40, 30, "#a9d0e6"));
-      items.push(rect(hx + 60, horizon + 20, 36, 28, "#a9d0e6"));
-      items.push(rect(0, horizon + 70, W, 10, "#c8c2b2")); // 담장
-      for (let x = 0; x < W; x += 24) items.push(rect(x, horizon + 62, 5, 22, "#b3ad9c"));
-      trees(3, horizon + 20, horizon + 60);
+      const roofs = ["#b5523b", "#4f6f8a", "#7a5a48"];
+      // 양옆 이웃집(작게)
+      for (const [nx, nw, c] of [[-30, 120, "#d9d2c0"], [W - 100, 130, "#d4d8d6"]] as const) {
+        items.push(rect(nx, horizon + 5, nw, 62, c));
+        items.push(<polygon key={key()} points={`${nx - 8},${horizon + 5} ${nx + nw / 2},${horizon - 30} ${nx + nw + 8},${horizon + 5}`} fill={roofs[Math.floor(r() * 3)]} />);
+        items.push(rect(nx + 24, horizon + 22, 24, 20, "#a9d0e6"));
+      }
+      const hx = 120 + r() * 100;
+      const hw = 160 + r() * 30;
+      items.push(rect(hx, horizon - 10, hw, 85, "#ece3cf"));
+      items.push(<polygon key={key()} points={`${hx - 14},${horizon - 10} ${hx + hw / 2},${horizon - 65} ${hx + hw + 14},${horizon - 10}`} fill={roofs[Math.floor(r() * 3)]} />);
+      items.push(rect(hx + hw - 38, horizon - 52, 12, 24, "#8a6a5a")); // 굴뚝
+      items.push(rect(hx + 20, horizon + 22, 28, 53, "#6b4a32")); // 현관문
+      items.push(rect(hx + hw - 78, horizon + 14, 44, 32, "#a9d0e6"));
+      items.push(rect(hx + 66, horizon + 14, 38, 30, "#a9d0e6"));
+      items.push(rect(hx + hw - 78, horizon + 29, 44, 2, "#ece3cf"));
+      items.push(rect(0, horizon + 70, W, 12, "#c8c2b2")); // 담장
+      for (let x = 0; x < W; x += 24) items.push(rect(x, horizon + 62, 5, 24, "#b3ad9c"));
+      items.push(rect(hx + 8, horizon + 52, 54, 34, "#5a6b78")); // 대문
+      // 골목길과 승용차
+      items.push(rect(0, horizon + 96, W, H - horizon - 96, "#7b7e80"));
+      items.push(rect(0, horizon + 94, W, 3, "#b9b7ae"));
+      const cx = 280 + r() * 100;
+      items.push(rect(cx, horizon + 112, 74, 20, "#3f5f8a"));
+      items.push(rect(cx + 14, horizon + 102, 44, 14, "#4d6f9c"));
+      items.push(<circle key={key()} cx={cx + 16} cy={horizon + 133} r="6" fill="#222" />);
+      items.push(<circle key={key()} cx={cx + 58} cy={horizon + 133} r="6" fill="#222" />);
+      trees(2, horizon + 25, horizon + 50);
       break;
     }
     case "building": {

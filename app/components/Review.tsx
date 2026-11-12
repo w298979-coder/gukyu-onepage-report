@@ -90,7 +90,7 @@ const VERDICT_STYLE = {
 
 function Cites({ s }: { s: ReviewSentence }) {
   return (
-    <span className="ml-1 text-xs text-zinc-500">
+    <span className="ml-1 text-[13px] text-zinc-500">
       {s.citations.map((c, i) => (
         <span key={c.id}>
           {i > 0 && ", "}
@@ -129,9 +129,9 @@ function RestrictionList({ items }: { items: RestrictionView[] }) {
     <ul className="flex flex-col gap-1.5">
       {items.map((r, i) => (
         <li key={i} className="break-words">
-          <span className="mr-1 rounded bg-zinc-100 px-1.5 py-0.5 text-xs">{r.대상}</span>
+          <span className="mr-1 rounded bg-zinc-100 px-1.5 py-0.5 text-[13px]">{r.대상}</span>
           {r.제한내용}
-          <span className="ml-1 text-xs">
+          <span className="ml-1 text-[13px]">
             <a href={r.citation.url} target="_blank" rel="noopener noreferrer" className="text-blue-700 underline">
               {r.citation.label}
             </a>
@@ -168,9 +168,9 @@ function RelatedDetail({ related }: { related: RelatedResult }) {
   return (
     <div className="mb-4">
       <h4 className="mb-1 font-semibold">
-        관계법령상 제한 <span className={`ml-1 rounded px-2 py-0.5 text-sm font-semibold ${RELATED_STYLE[related.overall]}`}>{related.overall}</span>
+        관계법령상 제한 <span className={`ml-1 rounded px-2 py-0.5 text-[15px] font-semibold ${RELATED_STYLE[related.overall]}`}>{related.overall}</span>
       </h4>
-      <p className="mb-2 text-xs text-zinc-600">
+      <p className="mb-2 text-[13px] text-zinc-600">
         브이월드의 용도지역·지구·구역 지정내역으로 관계법령(국가법령정보센터)에서 국유재산 처분(매각·양도) 제한을 확인한 결과입니다. 법령 조문을 읽고 정리한 것이므로 업무에 쓰기 전에 원문을 확인하세요.
       </p>
       <p className="mb-2">
@@ -181,13 +181,13 @@ function RelatedDetail({ related }: { related: RelatedResult }) {
         {related.items.map((i) => (
           <li key={i.이름} className="rounded border border-zinc-200 px-3 py-2">
             <p>
-              <span className={`mr-1 rounded px-1.5 py-0.5 text-xs font-semibold ${ITEM_STYLE[i.판정]}`}>{i.판정}</span>
-              <span className="font-medium">{i.구역.join(", ")}</span> <span className="text-xs text-zinc-500">· {i.법령}</span>
+              <span className={`mr-1 rounded px-1.5 py-0.5 text-[13px] font-semibold ${ITEM_STYLE[i.판정]}`}>{i.판정}</span>
+              <span className="font-medium">{i.구역.join(", ")}</span> <span className="text-[13px] text-zinc-500">· {i.법령}</span>
             </p>
             <p className="mt-1 break-words">{i.제한내용}</p>
             {i.비고 && <p className="mt-1 break-words text-zinc-600">참고: {i.비고}</p>}
             {(i.citations.length > 0 || i.참고.length > 0) && (
-              <p className="mt-1 text-xs">
+              <p className="mt-1 text-[13px]">
                 {[...i.citations.map((c) => ({ ...c, 참고: false })), ...i.참고.map((c) => ({ ...c, 참고: true }))].map((c, k) => (
                   <span key={c.id}>
                     {k > 0 && ", "}
@@ -213,17 +213,17 @@ export function VerdictCard({ related }: { related: RelatedResult }) {
   const { state, run } = useReview();
   const relBlock = (
     <div>
-      <p className="text-sm font-semibold text-zinc-700">
+      <p className="text-[15px] font-semibold text-zinc-700">
         관계법령상 제한 <SourceBadge source="브이월드" />
       </p>
       <p className="mt-0.5">
         <span className={`rounded px-2 py-0.5 font-semibold ${RELATED_STYLE[related.overall]}`}>{related.overall}</span>
       </p>
-      <p className="mt-1 line-clamp-2 break-words text-sm text-zinc-700">{relatedSummary(related)}</p>
+      <p className="mt-1 line-clamp-2 break-words text-[15px] text-zinc-700">{relatedSummary(related)}</p>
     </div>
   );
   const sectionTitle = (
-    <p className="text-sm font-semibold text-zinc-700">
+    <p className="text-[15px] font-semibold text-zinc-700">
       처분기준상 제한 <span className="font-normal text-zinc-500">({DISPOSAL_BASIS} 검토)</span>
     </p>
   );
@@ -239,7 +239,7 @@ export function VerdictCard({ related }: { related: RelatedResult }) {
               <p role="alert" className="mt-1 text-red-700">
                 {state.message}
               </p>
-              <button type="button" onClick={run} className="mt-1 rounded bg-blue-700 px-3 py-1 text-sm font-medium text-white hover:bg-blue-800 print:hidden">
+              <button type="button" onClick={run} className="mt-1 rounded bg-blue-700 px-3 py-1 text-[15px] font-medium text-white hover:bg-blue-800 print:hidden">
                 다시 시도
               </button>
             </>
@@ -261,7 +261,7 @@ export function VerdictCard({ related }: { related: RelatedResult }) {
           <RelatedDetail related={related} />
           <div className="border-t border-zinc-200 pt-3">
             <h4 className="mb-1 font-semibold">
-              처분기준상 제한 <span className="text-sm font-normal text-zinc-500">({DISPOSAL_BASIS} 검토)</span>
+              처분기준상 제한 <span className="text-[15px] font-normal text-zinc-500">({DISPOSAL_BASIS} 검토)</span>
             </h4>
             <p className="mb-3 text-zinc-600">{REFERENCE_NOTE}</p>
             <p className="mb-3">
@@ -269,7 +269,7 @@ export function VerdictCard({ related }: { related: RelatedResult }) {
             </p>
             {r.verdictNote && <p className="mb-3 rounded bg-amber-50 px-3 py-2 text-amber-900">{r.verdictNote}</p>}
             <SentenceList title="판정 이유와 근거" items={r.verdictReasons} />
-            {r.hidden > 0 && <p className="text-xs text-zinc-500">근거를 확인하지 못해 숨긴 문장: {r.hidden}건</p>}
+            {r.hidden > 0 && <p className="text-[13px] text-zinc-500">근거를 확인하지 못해 숨긴 문장: {r.hidden}건</p>}
           </div>
         </>
       }
@@ -279,9 +279,9 @@ export function VerdictCard({ related }: { related: RelatedResult }) {
         {sectionTitle}
         <p className="mt-0.5">
           <span className={`rounded px-2 py-0.5 font-semibold ${VERDICT_STYLE[r.verdict]}`}>{r.verdict}</span>
-          <span className="ml-1 text-xs text-zinc-500">AI 검토 · 참고용</span>
+          <span className="ml-1 text-[13px] text-zinc-500">AI 검토 · 참고용</span>
         </p>
-        <p className="mt-1 line-clamp-2 break-words text-sm">
+        <p className="mt-1 line-clamp-2 break-words text-[15px]">
           {first ? (
             <>
               {first.text}
@@ -328,7 +328,7 @@ export function ManagementCard({
       {result ? <SentenceList title="관리방안 (효율적인 순서)" items={result.management} /> : <p className="mb-3 text-zinc-500">관리방안은 AI 검토가 끝나면 표시됩니다.</p>}
       <div className="mt-4 border-t border-zinc-200 pt-3">
         <p className="mb-1 font-medium">이 필지에 적용되는 대부·처분·관리 제한 조항 ({list.length}건)</p>
-        <p className="mb-2 text-xs text-zinc-600">필지 상태·지목·현황 항목에 맞는 조항을 앱이 저장된 법령·내규에서 고른 것입니다. 요약이므로 업무에 쓰기 전에 원문을 확인하세요.</p>
+        <p className="mb-2 text-[13px] text-zinc-600">필지 상태·지목·현황 항목에 맞는 조항을 앱이 저장된 법령·내규에서 고른 것입니다. 요약이므로 업무에 쓰기 전에 원문을 확인하세요.</p>
         <RestrictionList items={list} />
       </div>
       <div className="mt-4 rounded bg-zinc-50 px-3 py-2">
@@ -351,7 +351,7 @@ export function ManagementCard({
   return (
     <ReportCard title="관리방안" detail={detail}>
       {/* 매각가능여부와 사유(간결) */}
-      <p className="mb-2 border-b border-zinc-200 pb-2 text-sm">
+      <p className="mb-2 border-b border-zinc-200 pb-2 text-[15px]">
         <span className="font-semibold text-zinc-700">매각가능여부</span>{" "}
         {result ? (
           <>
@@ -365,7 +365,7 @@ export function ManagementCard({
           <span className="text-zinc-500">{state.kind === "error" ? "AI 검토를 불러오지 못했습니다" : "AI 검토 중…"}</span>
         )}
         {relatedWithBasis.length > 0 && (
-          <span className="mt-0.5 block text-xs">
+          <span className="mt-0.5 block text-[13px]">
             <span className={`rounded px-1 py-0.5 font-semibold ${RELATED_STYLE[related.overall]}`}>관계법령 {related.overall}</span>
             {relatedWithBasis.map((i) => (
               <span key={i.이름} className="ml-1 text-zinc-600">
@@ -406,7 +406,7 @@ export function ManagementCard({
           </>
         )
       ) : (
-        <div className="text-sm">
+        <div className="text-[15px]">
           <p className="text-zinc-600">{state.kind === "error" ? "관리방안을 불러오지 못했습니다. 적용되는 제한 조항은 세부확인에서 볼 수 있습니다." : "현황을 법령·내규에 비추어 AI가 검토하는 중입니다…"}</p>
           {memo && (
             <p className="mt-2 break-words">

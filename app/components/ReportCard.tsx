@@ -31,7 +31,7 @@ export default function ReportCard({ title, count, source = null, detail, histor
   return (
     <section className={`flex min-h-0 flex-col overflow-hidden rounded-lg border border-zinc-300 bg-white ${className}`}>
       <header className="flex items-center justify-between gap-2 border-b border-zinc-200 bg-zinc-50 px-4 py-2.5">
-        <h2 className="min-w-0 truncate text-base font-semibold text-zinc-900">
+        <h2 className="min-w-0 truncate text-lg font-semibold text-zinc-900">
           {title}
           {count && <span className="ml-1.5 font-normal text-zinc-500">{count}</span>}
           {edit ? <EditSource parcelId={edit.parcelId} item={edit.item} fallback={source} /> : <SourceBadge source={source} />}
@@ -60,7 +60,7 @@ export default function ReportCard({ title, count, source = null, detail, histor
           )}
         </div>
       </header>
-      <div className="min-h-0 flex-1 overflow-hidden px-4 py-3 text-base leading-7 text-zinc-800">
+      <div className="min-h-0 flex-1 overflow-hidden px-4 py-3 text-[17px] leading-7 text-zinc-800">
         {edit ? (
           <EditBody parcelId={edit.parcelId} item={edit.item}>
             {children}
