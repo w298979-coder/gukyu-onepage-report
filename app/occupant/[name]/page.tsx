@@ -54,7 +54,7 @@ export default function OccupantPage({ params }: PageProps<"/occupant/[name]">) 
   return (
     <div className="flex min-h-screen flex-col bg-zinc-50 text-zinc-900 xl:h-dvh xl:overflow-hidden print:h-[194mm] print:min-h-0 print:overflow-hidden">
       <div className="bg-amber-100 px-4 py-1.5 text-center text-sm text-amber-900" role="note">
-        가상 데이터 포함 · 점유자 이름은 마스킹된 가상 이름입니다 · 담당자의 판단을 돕는 참고용입니다
+        가상 데이터 포함 · 점유자·민원인 이름은 모두 가상 이름입니다(실존 인물과 무관) · 담당자의 판단을 돕는 참고용입니다
       </div>
       <Suspense fallback={<div className="px-4 py-3 text-2xl font-bold">점유자별 리포트</div>}>
         <Section params={params} />

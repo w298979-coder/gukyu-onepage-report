@@ -61,6 +61,8 @@ export interface Penalty {
 export interface Complaint {
   id: string;
   접수일: string | null;
+  /** 민원인(가상 이름, 실존 인물과 무관) */
+  민원인: string;
   내용: string;
   처리상태: "접수" | "처리중" | "완료";
 }

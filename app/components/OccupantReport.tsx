@@ -122,7 +122,7 @@ export default function OccupantReport({ report }: { report: OccupantReportView 
       tone: c.처리상태 === "접수" ? "red" : c.처리상태 === "처리중" ? "amber" : "green",
       chip: c.처리상태 === "완료" ? "처리완료" : c.처리상태,
       link: lot,
-      text: ` · ${fmtDate(c.접수일)} · ${c.내용}`,
+      text: ` · ${fmtDate(c.접수일)} · 민원인 ${c.민원인} · ${c.내용}`,
     }));
   const openComplaints = complaints.filter((c) => c.chip !== "처리완료").length;
 
@@ -202,7 +202,7 @@ export default function OccupantReport({ report }: { report: OccupantReportView 
       <ReportCard title="안내">
         <ul className="flex list-disc flex-col gap-1 pl-4 text-sm text-zinc-700">
           <li>
-            <SourceBadge source="가상" /> 점유자 이름은 마스킹된 가상 이름이며, <b>같은 이름을 같은 점유자</b>로 묶었습니다. 실제 점유자를 식별하는 자료가 아닙니다.
+            <SourceBadge source="가상" /> 점유자·민원인 이름은 모두 지어낸 가상 이름(실존 인물과 무관)이며, <b>같은 이름을 같은 점유자</b>로 묶었습니다.
           </li>
           <li>
             각 칸은 <Chip tone="red">무단점유·미납·미완료</Chip>

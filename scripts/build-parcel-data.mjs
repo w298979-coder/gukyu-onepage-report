@@ -24,7 +24,10 @@ function rng(seed) {
   };
 }
 
-const NAMES = ["김○○", "이○○", "박○○", "최○○", "정○○", "강○○", "조○○", "윤○○", "장○○", "임○○", "한○○", "오○○"];
+// 점유자·민원인 이름은 모두 지어낸 가상 이름이다(실존 인물과 무관). 사용자 요청으로 가리지 않고 전체 이름을 보여 준다.
+const NAMES = ["김도윤", "이서준", "박주원", "최민서", "정우진", "강하람", "조현우", "윤서연", "장예린", "임수빈", "한지우", "오시윤"];
+const COMPLAINANTS = ["송가은", "배준호", "류지안", "문태호", "안소율", "홍재민", "권나연", "신도경", "남궁현", "서하윤", "노은채", "하민재"];
+const EXTRA_NAMES = ["현빈"]; // 사용자가 직접 요청한 가상 점유자(가양동 174-7)
 const iso = (y, m, d) => `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
 const addYears = (s, n) => iso(Number(s.slice(0, 4)) + n, Number(s.slice(5, 7)), Number(s.slice(8, 10)));
 const round1000 = (n) => Math.round(n / 1000) * 1000;
@@ -223,10 +226,10 @@ function makeVirtual(p, v, i, area) {
     }[p.상태];
     out.민원.push({ id: `${pid}-c-v1`, 접수일: dateIn(2025 + (r3() < 0.5 ? 1 : 0)), 내용: pick3(text), 처리상태: pick3(["접수", "처리중", "완료", "완료"]) });
   }
-  // 사용자가 요청한 특수 사례: 가양동 174-7 — 점유자 '현○'(가상)가 대부계약 후 해지, 해지 뒤에도 점유해 변상금이 부과됨.
+  // 사용자가 요청한 특수 사례: 가양동 174-7 — 점유자 '현빈'(가상)가 대부계약 후 해지, 해지 뒤에도 점유해 변상금이 부과됨.
   // 포털 상태는 '대부(입찰)검토재산'(사용자 없음)이라 일반 규칙과 어긋나므로 검증에서 이 필지만 예외로 둔다(EXCEPTION_LOTS).
   if (p.지번.endsWith("가양동 174-7")) {
-    const occ = { id: `${pid}-o1`, 이름: "현○", 점유면적: area ? Math.round(area * 0.9 * 10) / 10 : null, 점유시작일: "2022-04-01", 비고: "대부계약 해지 후 계속 점유(가상)" };
+    const occ = { id: `${pid}-o1`, 이름: "현빈", 점유면적: area ? Math.round(area * 0.9 * 10) / 10 : null, 점유시작일: "2022-04-01", 비고: "대부계약 해지 후 계속 점유(가상)" };
     out.점유자 = [occ];
     out.대부계약 = [{ id: `${pid}-l1`, 점유자id: occ.id, 계약시작일: "2022-04-01", 계약종료일: "2025-05-31", 연사용료: area ? round1000(price * (occ.점유면적 ?? area) * 0.05) : null, 상태: "해지" }];
     out.변상금 = [
@@ -243,6 +246,10 @@ function makeVirtual(p, v, i, area) {
     out.과거이용.push({ 종류: "무단점유", 시작일: "2025-06-01", 종료일: null, 내용: "대부계약 해지 후에도 점유 계속, 변상금 부과(가상)" });
     out.메모 = "대부계약 해지(2025-05-31) 후에도 점유가 계속되어 변상금이 부과됨. 변상금 납부와 점유 정리 방향을 확인할 것.";
   }
+  // 민원인(가상 이름): 난수를 쓰지 않고 순서로 정해 기존 가상 값이 바뀌지 않게 한다.
+  out.민원.forEach((c, k) => {
+    c.민원인 = COMPLAINANTS[(i * 7 + k * 3) % COMPLAINANTS.length];
+  });
   return { pid, ...out };
 }
 
@@ -280,7 +287,8 @@ for (const p of parcels) {
   const occIds = new Set(p.점유자.map((o) => o.id));
   for (const l of p.대부계약) if (!occIds.has(l.점유자id)) problems.push(`${p.지번}: 대부계약의 점유자 없음`);
   for (const x of p.변상금) if (!occIds.has(x.점유자id) && !x.점유자id.endsWith("-xo")) problems.push(`${p.지번}: 변상금의 점유자 없음`);
-  for (const o of p.점유자) if (!/○/.test(o.이름)) problems.push(`${p.지번}: 점유자 이름이 가려지지 않음`);
+  for (const o of p.점유자) if (![...NAMES, ...EXTRA_NAMES].includes(o.이름)) problems.push(`${p.지번}: 점유자 이름이 가상 이름 목록에 없음`);
+  for (const c of p.민원) if (!COMPLAINANTS.includes(c.민원인)) problems.push(`${p.지번}: 민원인 이름이 가상 이름 목록에 없음`);
   const childIds = [...p.점유자, ...p.대부계약, ...p.변상금, ...p.민원].map((x) => x.id);
   if (new Set(childIds).size !== childIds.length) problems.push(`${p.지번}: 점유자·계약·변상금·민원 id 중복`);
   for (const x of p.변상금) {

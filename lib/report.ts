@@ -59,7 +59,7 @@ function ownerName(occ: Occupant[], id: string): string {
 const leaseLine = (l: Lease, name: string) =>
   `${name} · ${l.상태} · ${fmtDate(l.계약시작일)} ~ ${fmtDate(l.계약종료일)} · 연 사용료 ${fmtWon(l.연사용료)}`;
 const penaltyLine = (x: Penalty, name: string) => `${name} · ${fmtDate(x.부과일)} 부과 · ${fmtWon(x.금액)} · ${x.납부상태}`;
-const complaintLine = (c: Complaint) => `${fmtDate(c.접수일)} · ${c.처리상태} · ${c.내용}`;
+const complaintLine = (c: Complaint) => `${fmtDate(c.접수일)} · ${c.처리상태} · 민원인 ${c.민원인} · ${c.내용}`;
 
 /** 과거 무단점유·대부계약 이력 한 줄 (종료일이 없으면 현재까지 이어지는 것) */
 const pastLine = (u: PastUse) => `${fmtDate(u.시작일)} ~ ${u.종료일 ? u.종료일 : "현재까지"} · ${u.내용}`;
