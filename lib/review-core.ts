@@ -209,6 +209,11 @@ export function finalizeReview(
     verdict = "추가 확인 필요";
     verdictNote = '매각제한재산이므로 "가능"으로 표시하지 않고 "추가 확인 필요"로 바꿨습니다.';
   }
+  // "가능"이라도 이 필지에 적용되는 처분 제한 조항이 있으면 함께 확인하도록 안내한다(AI가 인용한 조문이 판정을 뒷받침하는지는 코드가 검증하지 못하므로).
+  const disposal = restrictions.filter((r) => r.대상 === "처분" && articles.has(r.조문id)).length;
+  if (verdict === "가능" && disposal > 0) {
+    verdictNote = `"가능"은 AI의 참고 판단입니다. 이 필지에 적용되는 처분 제한 조항 ${disposal}건을 함께 확인하세요.`;
+  }
 
   // AI 결과와 무관하게, 코드가 고른 제한 조항은 모두 붙인다(누락 방지). 원문을 찾을 수 없는 조항은 제외한다.
   const views: RestrictionView[] = [];
