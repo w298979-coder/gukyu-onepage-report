@@ -3,6 +3,7 @@
 import ReportCard, { DetailLines, Lines } from "./ReportCard";
 import { ManagementCard, ReviewProvider, VerdictCard } from "./Review";
 import { EditHistory } from "./Edits";
+import OccupantReportButton from "./OccupantReportButton";
 import SourceBadge from "./SourceBadge";
 import { buildReport, type BasicRow } from "@/lib/report";
 import { ARTICLES, MISSING_DOCS, RELATED_ARTICLES, RELATED_DEFS, RESTRICTIONS } from "@/lib/law";
@@ -38,7 +39,7 @@ export default function Report({ parcel }: { parcel: Parcel }) {
         <Rows rows={v.basic} />
       </ReportCard>
 
-      <ReportCard title="점유자 현황" count={v.occupants.count} source={v.occupants.source} detail={<DetailLines lines={v.occupants.detail} />} history={<><DetailLines lines={v.occupants.history} /><EditHistory parcelId={parcel.id} item="점유자" /></>} historyCount={v.occupants.historyCount} historySource="가상" edit={{ parcelId: parcel.id, item: "점유자", original: v.occupants.detail.join("\n") }}>
+      <ReportCard title="점유자 현황" count={v.occupants.count} source={v.occupants.source} detail={<DetailLines lines={v.occupants.detail} />} history={<><DetailLines lines={v.occupants.history} /><EditHistory parcelId={parcel.id} item="점유자" /></>} historyCount={v.occupants.historyCount} historySource="가상" footerLeft={<OccupantReportButton names={[...new Set(parcel.점유자.map((o) => o.이름))]} />} edit={{ parcelId: parcel.id, item: "점유자", original: v.occupants.detail.join("\n") }}>
         <Lines lines={v.occupants.summary} />
       </ReportCard>
 

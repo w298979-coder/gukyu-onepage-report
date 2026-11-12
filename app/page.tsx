@@ -6,6 +6,7 @@ import LookupForm from "./components/LookupForm";
 import PrintButton from "./components/PrintButton";
 import Report from "./components/Report";
 import { findParcels, parseJibun, shortAddress } from "@/lib/jibun";
+import { getOccupantList } from "@/lib/occupants";
 import { getParcels } from "@/lib/parcels";
 import type { Parcel } from "@/lib/types";
 
@@ -38,6 +39,7 @@ async function LookupSection({ searchParams }: { searchParams: SearchParams }) {
   }
 
   const examples = [all[0], all[8], all[14], all[21]].filter(Boolean) as Parcel[];
+  const occupants = getOccupantList();
 
   return (
     <main className="mx-auto flex w-full max-w-[1800px] min-h-0 flex-1 flex-col gap-3 px-4 py-3">
@@ -106,6 +108,24 @@ async function LookupSection({ searchParams }: { searchParams: SearchParams }) {
                   className="inline-block rounded-full border border-zinc-300 bg-white px-3 py-1 hover:border-blue-600 hover:bg-blue-50"
                 >
                   {shortAddress(p.지번)}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {q.trim() === "" && occupants.length > 0 && (
+        <section className="flex flex-col gap-2 text-sm text-zinc-600">
+          <p>점유자별로 보려면 점유자를 눌러 주세요. (점유자별 리포트 · 가상 데이터)</p>
+          <ul className="flex flex-wrap gap-2">
+            {occupants.map((o) => (
+              <li key={o.이름}>
+                <Link
+                  href={`/occupant/${encodeURIComponent(o.이름)}`}
+                  className="inline-block rounded-full border border-blue-300 bg-white px-3 py-1 text-blue-700 hover:border-blue-600 hover:bg-blue-50"
+                >
+                  {o.이름} · 필지 {o.필지수}건{o.미납변상금수 > 0 ? ` · 미납 ${o.미납변상금수}` : ""}
                 </Link>
               </li>
             ))}

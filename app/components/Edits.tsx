@@ -4,6 +4,7 @@
 import { useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import { addEdit, editHistoryLines, formatTime, getEdits, MAX_NAME, MAX_TEXT, parseStore, STORAGE_KEY, validateEdit } from "@/lib/edits";
 import type { EditableItem, Source } from "@/lib/types";
+import DetailDialog from "./DetailDialog";
 import SourceBadge from "./SourceBadge";
 
 // ---- 저장소 구독 (같은 탭의 여러 카드가 함께 갱신되도록 직접 알림을 보낸다) ----
@@ -73,29 +74,38 @@ export function EditHistory({ parcelId, item }: { parcelId: string; item: Editab
   );
 }
 
-/** 카드 맨 아래 줄: 과거이력 유무(수정 기록 포함)와 수정·추가 버튼 */
-export function CardFooter({
+/** 카드 머리의 "과거이력" 버튼: 기존 과거이력과 수정 기록을 합친 건수를 버튼에 적는다 */
+export function HistoryButton({
   parcelId,
   item,
   title,
-  baseHistoryCount,
-  original,
+  baseCount,
+  source,
+  children,
 }: {
   parcelId: string;
   item: EditableItem;
   title: string;
   /** 서버가 계산한 기존 과거이력 건수 */
-  baseHistoryCount: number;
-  /** 수정 전 원래 내용(첫 수정 때 이전 값으로 남긴다) */
-  original: string;
+  baseCount: number;
+  source: Source | null;
+  children: ReactNode;
 }) {
   const edits = useEdits(parcelId, item);
-  const total = baseHistoryCount + edits.length;
+  const total = baseCount + edits.length;
+  return (
+    <DetailDialog title={title} label="과거이력" source={source} buttonLabel={total > 0 ? `과거이력 ${total}건` : "과거이력 없음"} tone={total > 0 ? "has" : "none"}>
+      {children}
+    </DetailDialog>
+  );
+}
+
+/** 카드 맨 아래 줄: 수정·추가 버튼 */
+export function EditFooter({ parcelId, item, title, original, left }: { parcelId: string; item: EditableItem; title: string; original: string; left?: ReactNode }) {
+  const edits = useEdits(parcelId, item);
   return (
     <div className="flex items-center justify-between gap-2 border-t border-zinc-200 px-4 py-1.5 text-sm">
-      <span className={total > 0 ? "font-medium text-blue-700" : "text-zinc-500"}>
-        {total > 0 ? `과거이력 있음 (${total}건)` : "과거이력 없음"}
-      </span>
+      <div>{left}</div>
       <EditButton parcelId={parcelId} item={item} title={title} current={edits.at(-1)?.값 ?? ""} original={original} />
     </div>
   );
