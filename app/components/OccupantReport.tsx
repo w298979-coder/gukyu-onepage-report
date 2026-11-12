@@ -18,12 +18,12 @@ const TONE: Record<Tone, string> = {
 };
 
 function Chip({ tone, children }: { tone: Tone; children: ReactNode }) {
-  return <span className={`mr-1.5 inline-block rounded px-1.5 py-0.5 align-middle text-xs font-semibold leading-none ${TONE[tone]}`}>{children}</span>;
+  return <span className={`mr-1.5 inline-block rounded px-1.5 py-0.5 align-middle text-[13px] font-semibold leading-none ${TONE[tone]}`}>{children}</span>;
 }
 
 function Cites({ s }: { s: CitedSentence }) {
   return (
-    <span className="ml-1 text-xs text-zinc-500">
+    <span className="ml-1 text-[13px] text-zinc-500">
       {s.citations.map((c, i) => (
         <span key={c.id}>
           {i > 0 && ", "}
@@ -54,7 +54,7 @@ function ItemList({ items, title, detail, max = 4, emptyText = NONE, single = fa
     <>
     <ul className="flex flex-col gap-1.5">
       {items.slice(0, max).map((it) => (
-        <li key={it.key} className={single ? "truncate text-sm" : "line-clamp-3 break-words"} title={single ? `${it.link ? shortLot(it.link) : ""}${it.text}` : undefined}>
+        <li key={it.key} className={single ? "truncate text-[15px]" : "line-clamp-3 break-words"} title={single ? `${it.link ? shortLot(it.link) : ""}${it.text}` : undefined}>
           <Chip tone={it.tone}>{it.chip}</Chip>
           {it.link ? (
             <>
@@ -138,8 +138,8 @@ export default function OccupantReport({ report }: { report: OccupantReportView 
   const openComplaints = complaints.filter((c) => c.chip !== "처리완료").length;
 
   return (
-    <div className="grid min-h-0 flex-1 grid-cols-1 items-start gap-3 md:grid-cols-2 xl:grid-cols-4 print:grid-cols-4" aria-label={`${report.이름} 점유자별 리포트`}>
-      <div className="flex min-w-0 flex-col gap-3">
+    <div className="grid min-h-0 flex-1 grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4 xl:grid-rows-1 print:grid-cols-4 print:grid-rows-1" aria-label={`${report.이름} 점유자별 리포트`}>
+      <div className="flex min-h-0 min-w-0 flex-col gap-3 [&>section]:min-h-0 [&>section]:flex-1">
         <ReportCard title="요약" source="가상">
           <dl className="grid grid-cols-[6rem_1fr] gap-x-2 gap-y-1.5">
             <dt className="text-zinc-500">점유 필지</dt>
@@ -169,7 +169,7 @@ export default function OccupantReport({ report }: { report: OccupantReportView 
         </ReportCard>
 
         <ReportCard title="안내">
-          <ul className="flex list-disc flex-col gap-1 pl-4 text-sm text-zinc-700">
+          <ul className="flex list-disc flex-col gap-1 pl-4 text-[15px] text-zinc-700">
             <li>
               <SourceBadge source="가상" /> 점유자·민원인 이름은 모두 지어낸 가상 이름(실존 인물과 무관)이며, <b>같은 이름을 같은 점유자</b>로 묶었습니다.
             </li>
@@ -183,7 +183,7 @@ export default function OccupantReport({ report }: { report: OccupantReportView 
         </ReportCard>
       </div>
 
-      <div className="flex min-w-0 flex-col gap-3">
+      <div className="flex min-h-0 min-w-0 flex-col gap-3 [&>section]:min-h-0 [&>section]:flex-1">
         <ReportCard title="점유 필지" count={`${rows.length}건`} source="가상" detail={<DetailLines lines={lines(parcels)} />}>
           <ItemList items={parcels} title="점유 필지" detail={<DetailLines lines={lines(parcels)} />} />
         </ReportCard>
@@ -193,7 +193,7 @@ export default function OccupantReport({ report }: { report: OccupantReportView 
         </ReportCard>
       </div>
 
-      <div className="flex min-w-0 flex-col gap-3">
+      <div className="flex min-h-0 min-w-0 flex-col gap-3 [&>section]:min-h-0 [&>section]:flex-1">
         <ReportCard title="대부계약" count={leases.length ? `${leases.length}건` : NONE} source={leases.length ? "가상" : null} detail={<DetailLines lines={lines(leases)} />}>
           <ItemList items={leases} title="대부계약" detail={<DetailLines lines={lines(leases)} />} />
         </ReportCard>
@@ -208,9 +208,9 @@ export default function OccupantReport({ report }: { report: OccupantReportView 
         </ReportCard>
       </div>
 
-      <div className="flex min-w-0 flex-col gap-3">
+      <div className="flex min-h-0 min-w-0 flex-col gap-3 [&>section]:min-h-0 [&>section]:flex-1">
         <ReportCard title="주의사항" count={`${report.cautions.length}건`}>
-          <ul className="flex flex-col gap-1.5 text-sm">
+          <ul className="flex flex-col gap-1.5 text-[15px]">
             {report.cautions.map((c, i) => (
               <li key={i} className="break-words">
                 {c.text}
@@ -221,7 +221,7 @@ export default function OccupantReport({ report }: { report: OccupantReportView 
         </ReportCard>
 
         <ReportCard title="관리방안">
-          <ol className="flex list-decimal flex-col gap-1.5 pl-4 text-sm">
+          <ol className="flex list-decimal flex-col gap-1.5 pl-4 text-[15px]">
             {report.plan.map((c, i) => (
               <li key={i} className="break-words">
                 {c.text}
