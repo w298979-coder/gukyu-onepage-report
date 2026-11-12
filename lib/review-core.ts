@@ -6,7 +6,7 @@ import type { EditableItem, LawArticle, Parcel, Restriction, Verdict } from "./t
 const VERDICT_LIST = ["가능", "불가", "추가 확인 필요"] as const; // lib/types.ts 의 VERDICTS 와 같은 값 (시험 스크립트가 값 import를 풀지 못해 복사)
 
 export const NO_BASIS = "근거 자료에서 확인되지 않았습니다";
-export const MAX_ARTICLE_CHARS = 1200;
+export const MAX_ARTICLE_CHARS = 3000;
 
 // ---------- 1. 적용할 제한 조항 고르기 ----------
 
@@ -63,6 +63,17 @@ export interface ReviewResult {
   restrictions: RestrictionView[];
   /** 근거가 확인되지 않아 숨긴 문장 수 */
   hidden: number;
+}
+
+/** 글 속의 "제N조" 표기를 모은다("제27조의2제1항" → "제27조의2"). */
+export function articleMentions(text: string): string[] {
+  return [...text.matchAll(/제\s?(\d+)\s?조(?:\s?의\s?(\d+))?/g)].map((m) => `제${m[1]}조${m[2] ? "의" + m[2] : ""}`);
+}
+
+/** 문장 속에서 언급한 조 번호가 모두 그 문장이 인용한 조문의 번호일 때만 true. (인용 id는 맞는데 글에는 다른 조를 적는 경우를 막는다) */
+export function mentionsOnlyCited(text: string, citations: Citation[], articles: Map<string, LawArticle>): boolean {
+  const ok = new Set(citations.flatMap((c) => articleMentions(articles.get(c.id)?.조문번호 ?? "")));
+  return articleMentions(text).every((m) => ok.has(m));
 }
 
 export function citationOf(a: LawArticle): Citation {
@@ -180,7 +191,7 @@ export function finalizeReview(
         }
       }
       const text = cleanText(s.text);
-      if (citations.length === 0 || !text) hidden++; // 근거를 확인하지 못한 문장은 보여주지 않는다
+      if (citations.length === 0 || !text || !mentionsOnlyCited(text, citations, articles)) hidden++; // 근거를 확인하지 못한 문장은 보여주지 않는다
       else out.push({ text, citations });
     }
     return out;
