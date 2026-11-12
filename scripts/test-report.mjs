@@ -72,12 +72,13 @@ check("공시지가 이력의 마지막(가장 오래된 해)에는 증감률이
 check("공시지가 이력이 연도 수만큼 나온다", h3.etc.history.length === 16 + 1, String(h3.etc.history.length));
 const h4 = buildReport(by("가양동 598-11")); // 공시지가 없음
 check("공시지가가 없으면 이력은 해당 없음", h4.etc.history[0] === NONE);
-const noPast = parcels.find((p) => !p.과거이용.some((u) => u.종류 === "무단점유"));
+const noPast = { ...parcels[0], 과거이용: [] }; // 데이터에는 모든 필지에 이력이 있으므로 이력 없는 필지를 만들어 시험
 check("해당 종류의 이력이 없으면 '해당 없음'", pastHistory(noPast, "무단점유").length === 1 && pastHistory(noPast, "무단점유")[0] === NONE, noPast.지번);
 check("증감률 계산: 100→110은 +10.0%", priceHistory([{ 연도: 2024, 단가: 100 }, { 연도: 2025, 단가: 110 }])[0].includes("+10.0%") && priceHistory([{ 연도: 2024, 단가: 100 }, { 연도: 2025, 단가: 90 }])[0].includes("-10.0%"));
 check("모든 카드에 과거이력 줄이 있다", parcels.every((p) => { const v = buildReport(p); return [v.occupants, v.leases, v.penalties, v.complaints, v.etc].every((c) => c.history.length >= 1); }));
 
-check("과거이력 건수: 이력이 있으면 1건 이상, 없으면 0", buildReport(by("가양동 177-5")).occupants.historyCount >= 1 && buildReport(by("가양동 576-11")).leases.historyCount >= 1 && h4.etc.historyCount === 0 && buildReport(by("가양동 177-5")).penalties.historyCount === 0);
+check("과거이력 건수: 이력이 있으면 1건 이상, 없으면 0", buildReport(by("가양동 177-5")).occupants.historyCount >= 1 && buildReport(by("가양동 576-11")).leases.historyCount >= 1 && h4.etc.historyCount === 0);
+check("29건 모두 변상금·민원 과거이력이 있다", parcels.every((p) => { const v = buildReport(p); return v.penalties.historyCount >= 1 && v.complaints.historyCount >= 1; }));
 
 console.log(failed === 0 ? "\n모든 시험 통과" : `\n실패 ${failed}건`);
 process.exit(failed === 0 ? 0 : 1);

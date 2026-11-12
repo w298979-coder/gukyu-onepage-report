@@ -73,7 +73,7 @@ export interface LandPrice {
 
 /** 과거 무단점유·대부계약 이력 (가상 데이터). */
 export interface PastUse {
-  종류: "무단점유" | "대부계약";
+  종류: "무단점유" | "대부계약" | "변상금" | "민원";
   시작일: string | null;
   종료일: string | null;
   내용: string;

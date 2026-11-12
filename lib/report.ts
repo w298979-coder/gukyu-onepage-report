@@ -161,8 +161,8 @@ export function buildReport(p: Parcel): ReportView {
     count: p.변상금.length === 0 ? NONE : `${p.변상금.length}건${unpaid ? ` · 미완납 ${unpaid}` : ""}`,
     summary: limit(penLines, p.변상금.length),
     detail: p.변상금.length === 0 ? [NONE] : penLines,
-    history: [NONE, NO_EDIT_RECORD],
-    historyCount: 0,
+    history: [...pastHistory(p, "변상금"), NO_EDIT_RECORD],
+    historyCount: countHistory(pastHistory(p, "변상금")),
     source: p.변상금.length === 0 ? null : "가상",
   };
 
@@ -172,8 +172,8 @@ export function buildReport(p: Parcel): ReportView {
     count: p.민원.length === 0 ? NONE : `${p.민원.length}건${open ? ` · 미완료 ${open}` : ""}`,
     summary: limit(cLines, p.민원.length),
     detail: p.민원.length === 0 ? [NONE] : cLines,
-    history: [NONE, NO_EDIT_RECORD],
-    historyCount: 0,
+    history: [...pastHistory(p, "민원"), NO_EDIT_RECORD],
+    historyCount: countHistory(pastHistory(p, "민원")),
     source: p.민원.length === 0 ? null : "가상",
   };
 
