@@ -73,7 +73,7 @@ export interface LandPrice {
 
 /** 과거 무단점유·대부계약 이력 (가상 데이터). */
 export interface PastUse {
-  종류: "무단점유" | "대부계약" | "변상금" | "민원" | "관리사항";
+  종류: "무단점유" | "대부계약" | "변상금" | "민원";
   시작일: string | null;
   종료일: string | null;
   내용: string;
@@ -107,7 +107,7 @@ export interface Parcel {
 }
 
 /** 담당자가 수정·추가할 수 있는 항목. 공개 자료(포털·브이월드) 값은 수정할 수 없다. */
-export const EDITABLE_ITEMS = ["점유자", "대부계약", "변상금", "민원", "기타관리사항"] as const;
+export const EDITABLE_ITEMS = ["점유자", "대부계약", "변상금", "민원"] as const;
 export type EditableItem = (typeof EDITABLE_ITEMS)[number];
 
 /** 브라우저 저장소에 보관하는 수정 기록 하나. */

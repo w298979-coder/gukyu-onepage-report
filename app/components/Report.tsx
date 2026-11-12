@@ -3,7 +3,10 @@
 import ReportCard, { DetailLines, Lines } from "./ReportCard";
 import { ManagementCard, ReviewProvider, VerdictCard } from "./Review";
 import { EditHistory } from "./Edits";
+import AerialPhoto, { hasAerial } from "./AerialPhoto";
 import OccupantReportButton from "./OccupantReportButton";
+import PhotoFrame from "./PhotoFrame";
+import SitePhoto from "./SitePhoto";
 import SourceBadge from "./SourceBadge";
 import { buildReport, type BasicRow } from "@/lib/report";
 import { ARTICLES, MISSING_DOCS, RELATED_ARTICLES, RELATED_DEFS, RESTRICTIONS } from "@/lib/law";
@@ -35,7 +38,19 @@ export default function Report({ parcel }: { parcel: Parcel }) {
   return (
     <ReviewProvider parcelId={parcel.id}>
     <div className="grid min-h-0 flex-1 grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4 xl:grid-rows-2 print:grid-cols-4 print:grid-rows-2" aria-label={`${v.title} 종합현황`}>
-      <ReportCard title="기본 정보" detail={<DetailLines lines={v.basicDetail} />} history={<DetailLines lines={v.basicHistory} />} historySource="브이월드" historyCount={v.basicHistoryCount}>
+      <ReportCard title="기본 정보" detail={<DetailLines lines={v.basicDetail} />} history={<DetailLines lines={v.basicHistory} />} historySource="브이월드" historyCount={v.basicHistoryCount} className="xl:row-span-2 print:row-span-2">
+        <div className="mb-3 grid grid-cols-2 gap-2">
+          <PhotoFrame title="현황사진" source="가상 이미지(국유재산포털에 사진 자료 없음)">
+            <SitePhoto parcel={parcel} className="block aspect-[3/2] w-full" />
+          </PhotoFrame>
+          {hasAerial(parcel.id) ? (
+            <PhotoFrame title="항공사진" source="브이월드 항공영상 캡처 · 붉은 선은 필지 경계">
+              <AerialPhoto parcelId={parcel.id} jibun={parcel.지번} className="w-full" />
+            </PhotoFrame>
+          ) : (
+            <p className="text-sm text-zinc-500">항공사진: 해당 없음</p>
+          )}
+        </div>
         <Rows rows={v.basic} />
       </ReportCard>
 
@@ -57,11 +72,7 @@ export default function Report({ parcel }: { parcel: Parcel }) {
         <Lines lines={v.complaints.summary} />
       </ReportCard>
 
-      <ReportCard title="기타 관리사항" detail={<DetailLines lines={v.etc.detail} />} history={<><DetailLines lines={v.etc.history} /><EditHistory parcelId={parcel.id} item="기타관리사항" /></>} historyCount={v.etc.historyCount} historySource="가상" edit={{ parcelId: parcel.id, item: "기타관리사항", original: v.etc.detail.join("\n") }}>
-        <Rows rows={v.etc.rows} />
-      </ReportCard>
-
-      <ManagementCard restrictions={restrictions} missing={MISSING_DOCS} />
+      <ManagementCard restrictions={restrictions} missing={MISSING_DOCS} memo={parcel.기타관리사항.value} />
     </div>
     </ReviewProvider>
   );

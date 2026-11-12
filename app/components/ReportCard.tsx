@@ -22,12 +22,14 @@ interface Props {
   edit?: { parcelId: string; item: EditableItem; original: string };
   /** 수정·추가 줄의 왼쪽에 붙일 버튼(예: 점유자별 리포트) */
   footerLeft?: ReactNode;
+  /** 카드 바깥 상자에 더할 클래스(예: 두 줄에 걸치기) */
+  className?: string;
   children: ReactNode;
 }
 
-export default function ReportCard({ title, count, source = null, detail, history, historySource = null, historyCount, edit, footerLeft, children }: Props) {
+export default function ReportCard({ title, count, source = null, detail, history, historySource = null, historyCount, edit, footerLeft, className = "", children }: Props) {
   return (
-    <section className="flex min-h-0 flex-col overflow-hidden rounded-lg border border-zinc-300 bg-white">
+    <section className={`flex min-h-0 flex-col overflow-hidden rounded-lg border border-zinc-300 bg-white ${className}`}>
       <header className="flex items-center justify-between gap-2 border-b border-zinc-200 bg-zinc-50 px-4 py-2.5">
         <h2 className="min-w-0 truncate text-base font-semibold text-zinc-900">
           {title}

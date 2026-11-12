@@ -18,7 +18,7 @@ export interface Edit {
 
 export type EditStore = Record<string, Partial<Record<EditableItem, Edit[]>>>;
 
-const ITEMS = new Set<string>(["점유자", "대부계약", "변상금", "민원", "기타관리사항"]); // lib/types.ts 의 EDITABLE_ITEMS 와 같은 값
+const ITEMS = new Set<string>(["점유자", "대부계약", "변상금", "민원"]); // lib/types.ts 의 EDITABLE_ITEMS 와 같은 값
 const UNSAFE = new Set(["__proto__", "constructor", "prototype"]);
 
 /** 저장된 글을 읽는다. 깨졌거나 모양이 다르면 빈 저장소로 본다. 이름·길이가 맞지 않는 기록은 버린다. */

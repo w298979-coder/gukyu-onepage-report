@@ -43,7 +43,6 @@ export interface ReportView {
   leases: ListCard;
   penalties: ListCard;
   complaints: ListCard;
-  etc: { rows: BasicRow[]; detail: string[]; history: string[]; historyCount: number };
 }
 
 const MAX_SUMMARY = 3;
@@ -198,13 +197,7 @@ export function buildReport(p: Parcel): ReportView {
     source: p.민원.length === 0 ? null : "가상",
   };
 
-  // 기타 관리사항: 관리 메모(공시지가·용도지역은 기본 정보로 옮김)
   const prices = p.공시지가.value;
-  const etcRows: BasicRow[] = [
-    { label: "관리 메모", value: text(p.기타관리사항.value), source: p.기타관리사항.value ? p.기타관리사항.source : null },
-  ];
-  const etcDetail = [`관리 메모: ${etcRows[0].value}`];
-  const etcPast = pastHistory(p, "관리사항");
 
   return {
     title: p.지번,
@@ -216,6 +209,5 @@ export function buildReport(p: Parcel): ReportView {
     leases,
     penalties,
     complaints,
-    etc: { rows: etcRows, detail: etcDetail, history: etcPast, historyCount: countHistory(etcPast) },
   };
 }
