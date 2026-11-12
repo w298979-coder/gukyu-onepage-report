@@ -35,11 +35,11 @@ export default function AerialPhoto({ parcelId, jibun, className }: { parcelId: 
         .join(" ") + " Z"
     : null;
   return (
-    <div className={`relative ${className ?? ""}`} style={{ aspectRatio: `${w} / ${h}` }}>
+    <div className={`relative ${className ?? ""}`} style={{ aspectRatio: "4 / 3" }}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src={`/images/aerial/${parcelId}.jpg`} alt={`항공사진(브이월드): ${jibun}`} className="absolute inset-0 h-full w-full object-cover" loading="lazy" />
       {path && (
-        <svg viewBox={`0 0 ${w} ${h}`} className="absolute inset-0 h-full w-full" aria-hidden="true">
+        <svg viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="xMidYMid slice" className="absolute inset-0 h-full w-full" aria-hidden="true">
           <path d={path} fill="rgba(255,60,60,0.18)" stroke="#ff3b30" strokeWidth="2" strokeLinejoin="round" />
         </svg>
       )}

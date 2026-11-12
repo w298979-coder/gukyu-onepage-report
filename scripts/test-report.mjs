@@ -58,7 +58,7 @@ const e = buildReport(by("가양동 153-6")); // 대부(입찰)검토: 점유자
 check("점유자가 없으면 '해당 없음'", e.occupants.summary[0] === NONE && e.occupants.count === NONE);
 const f = buildReport(by("가양동 177-5")); // 무단점유: 변상금 3건
 check("변상금은 건수와 미완납 표시", f.penalties.count.includes("3건") && f.penalties.count.includes("미완납"), f.penalties.count);
-check("세 건을 넘으면 '외 N건' 안내", buildReport({ ...by("가양동 177-5"), 변상금: Array.from({ length: 5 }, (_, i) => ({ ...by("가양동 177-5").변상금[0], id: "x" + i })) }).penalties.summary.some((l) => l.startsWith("외 2건")));
+check("세 건을 넘으면 요약은 3건까지, 나머지는 추가사항 건수로", (() => { const big = buildReport({ ...by("가양동 177-5"), 변상금: Array.from({ length: 5 }, (_, k) => ({ ...by("가양동 177-5").변상금[0], id: "x" + k, 부과일: `2025-0${k + 1}-01` })) }); return big.penalties.summary.length === 3 && big.penalties.more === 2 && big.penalties.detail.length === 5 && big.penalties.summary[0].includes("2025-05-01"); })());
 
 
 // 과거이력
@@ -89,10 +89,13 @@ const rq = buildReport(q);
 check("가양동 174-7: 점유자 현빈, 대부계약은 해지, 변상금은 해지 이후 부과", q.점유자.length === 1 && q.점유자[0].이름 === "현빈" && q.대부계약[0].상태 === "해지" && q.변상금[0].점유자id === q.점유자[0].id && q.변상금[0].부과일 > q.대부계약[0].계약종료일, rq.penalties.summary[0]);
 check("가양동 174-7의 변상금 줄에 점유자 이름이 나온다", rq.penalties.summary[0].startsWith("현빈"));
 
-check("모든 점유자·민원인 이름이 전체 이름(가려지지 않음)이고 민원 줄에 민원인이 나온다", parcels.every((p) => p.점유자.every((o) => !o.이름.includes("○") && o.이름.length >= 2) && p.민원.every((c) => c.민원인 && !c.민원인.includes("○"))) && parcels.every((p) => buildReport(p).complaints.detail.every((l) => l === NONE || l.includes("민원인 ")) && buildReport(p).complaints.summary.every((l) => l === NONE || l.startsWith("외 ") || (l.split(" · ").length === 4 && !l.includes("\n")))));
+check("모든 점유자·민원인 이름이 전체 이름(가려지지 않음)이고 민원 줄에 민원인이 나온다", parcels.every((p) => p.점유자.every((o) => !o.이름.includes("○") && o.이름.length >= 2) && p.민원.every((c) => c.민원인 && !c.민원인.includes("○"))) && parcels.every((p) => buildReport(p).complaints.detail.every((l) => l === NONE || l.includes("민원인 ")) && buildReport(p).complaints.summary.every((l) => l === NONE || (l.split(" · ").length === 4 && !l.includes("\n")))));
 
 check("oneLine: 긴 글은 …으로 줄이고 공백을 정리", oneLine("가".repeat(40), 10) === "가".repeat(9) + "…" && oneLine("  a   b \n c ") === "a b c");
 check("민원 한 줄 요약은 내용·민원인·접수일·처리상태 순서", (() => { const q = parcels.find((x) => x.민원.length); const c = q.민원[0]; return complaintSummaryLine(c) === `${oneLine(c.내용)} · ${c.민원인} · ${c.접수일} · ${c.처리상태}`; })());
+
+check("최근 것이 요약 앞에 온다(변상금 부과 최근순, 민원 접수 최근순)", parcels.every((p) => { const v = buildReport(p); const pd = p.변상금.map((x) => x.부과일).sort().reverse(); const cd = p.민원.map((c) => c.접수일).sort().reverse(); return (p.변상금.length === 0 || v.penalties.summary[0].includes(pd[0])) && (p.민원.length === 0 || v.complaints.summary[0].includes(cd[0])); }));
+check("요약에 못 담은 건수(more)는 전체-3 이상일 때만", parcels.every((p) => { const v = buildReport(p); return v.penalties.more === Math.max(0, p.변상금.length - 3) && v.complaints.more === Math.max(0, p.민원.length - 3) && v.occupants.more === Math.max(0, p.점유자.length - 3) && v.leases.more === Math.max(0, p.대부계약.length - 3); }));
 
 console.log(failed === 0 ? "\n모든 시험 통과" : `\n실패 ${failed}건`);
 process.exit(failed === 0 ? 0 : 1);

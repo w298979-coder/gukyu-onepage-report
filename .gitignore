@@ -45,3 +45,6 @@ next-env.d.ts
 
 # bkit 작업 상태
 /.bkit/
+
+# Claude 작업 설정(개발 서버 설정 등)
+.claude/
