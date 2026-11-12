@@ -27,9 +27,14 @@ async function Section({ params }: { params: PageProps<"/occupant/[name]">["para
       </header>
       {report ? (
         <>
-          <p className="text-sm text-zinc-600">
-            <span className="font-semibold text-zinc-900">{report.이름}</span> · 점유 필지 {report.rows.length}건 · 현재 기준 <PrintButton />
-          </p>
+          <div className="flex flex-wrap items-end gap-x-5 gap-y-1">
+            <p className="text-5xl font-extrabold tracking-tight text-zinc-900" aria-label={`점유자 성명 ${report.이름}`}>
+              {report.이름}
+            </p>
+            <p className="pb-1 text-sm text-zinc-600">
+              점유자 · 점유 필지 {report.rows.length}건 · 현재 기준 <PrintButton />
+            </p>
+          </div>
           <OccupantReport report={report} />
         </>
       ) : (

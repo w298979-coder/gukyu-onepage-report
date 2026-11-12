@@ -25,7 +25,7 @@ check("미납 합계는 미납·일부납부 변상금의 금액 합", reports.e
 check("모든 주의사항·관리방안에 근거 조문이 있고 저장된 조문이다", reports.every((r) => [...r.cautions, ...r.plan].every((s) => s.articleIds.length > 0 && s.articleIds.every((id) => lawIds.has(id)))));
 check("관리방안은 3개 이하", reports.every((r) => r.plan.length >= 1 && r.plan.length <= 3));
 check("미납 변상금이 있으면 주의사항에 변상금 문장이 있다", reports.every((r) => r.totals.unpaidCount === 0 || r.cautions.some((c) => c.text.startsWith("[변상금]"))));
-check("유효 계약 없는 점유가 있으면 주의사항에 점유 문장이 있다", reports.every((r) => !r.rows.some((x) => x.noValidLease) || r.cautions.some((c) => c.text.startsWith("[점유]"))));
+check("유효 계약 없는 점유가 있으면 주의사항에 무단점유 문장이 있다", reports.every((r) => !r.rows.some((x) => x.noValidLease) || r.cautions.some((c) => c.text.startsWith("[무단점유]"))));
 
 // 만료 임박(가짜 날짜로)
 const fake = JSON.parse(JSON.stringify(parcels));
@@ -38,6 +38,7 @@ check("만료 임박 계약은 D-일수와 함께 주의사항에 나온다", r2
 lease.계약종료일 = "2030-01-10";
 const r3 = buildOccupantReport(fake, name, TODAY);
 check("만료가 멀면 만료 임박 문장이 없다", !r3.cautions.some((c) => c.text.startsWith("[대부계약]")));
+check("'무계약' 표현은 쓰지 않고 '무단점유'로 쓴다", reports.every((r) => [...r.cautions, ...r.plan].every((c) => !c.text.includes("무계약"))));
 check("지번 줄임", shortLot("대전광역시 동구 가양동 174-59") === "가양동 174-59" && shortLot("대전광역시 대덕구 갈전동 산 50-3") === "갈전동 산 50-3");
 
 console.log(failed === 0 ? "\n모든 시험 통과" : `\n실패 ${failed}건`);

@@ -10,7 +10,7 @@ export interface OccupantRow {
   leases: Lease[];
   penalties: Penalty[];
   complaints: Complaint[];
-  /** 이 점유자가 이 필지에서 유효한 대부계약 없이 점유 중이면 true */
+  /** 이 점유자가 이 필지에서 유효한 대부계약 없이 점유 중(무단점유)이면 true */
   noValidLease: boolean;
 }
 
@@ -129,7 +129,7 @@ export function buildOccupantReport(parcels: Parcel[], name: string, today: stri
   }
   if (noLease.length > 0) {
     cautions.push({
-      text: `[점유] 무계약 ${noLease.length}건(${noLease.map((r) => shortLot(r.parcel.지번)).join(", ")}) → 변상금 120%·철거 가능`,
+      text: `[무단점유] ${noLease.length}건(${noLease.map((r) => shortLot(r.parcel.지번)).join(", ")}) → 변상금 120%·철거 가능`,
       articleIds: ["국유재산법-제72조", "국유재산법-제74조"],
     });
   }
@@ -149,7 +149,7 @@ export function buildOccupantReport(parcels: Parcel[], name: string, today: stri
     plan.push({ text: "미납 변상금 독촉 → 분할납부 안내 → 체납 시 강제징수", articleIds: ["국유재산법 시행령-제71조", "국유재산법-제73조"] });
   }
   if (noLease.length > 0) {
-    plan.push({ text: "무계약 점유 → 대부계약 검토, 불가 시 철거", articleIds: ["국유재산법-제72조", "국유재산법-제74조"] });
+    plan.push({ text: "무단점유 → 대부계약 검토, 불가 시 철거", articleIds: ["국유재산법-제72조", "국유재산법-제74조"] });
   }
   if (expiring.length > 0) {
     plan.push({ text: "만료 임박 계약 → 1개월 전 갱신 신청 안내", articleIds: ["국유재산법-제46조", "국유재산법 시행령-제50조"] });
