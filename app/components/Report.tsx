@@ -1,9 +1,12 @@
 // Design Ref: §2 — 필지별 한 페이지 리포트. 큰 화면(1920×1080)에서는 페이지 스크롤 없이 한 장에 모든 칸이 보인다.
 // Plan: 작업 6. 현재 기준 항목 전체를 한 줄 요약으로 보여주고, 카드마다 세부확인 창을 둔다.
-import ReportCard, { DetailLines, Lines, PendingCard } from "./ReportCard";
+import ReportCard, { DetailLines, Lines } from "./ReportCard";
+import { ManagementCard, ReviewProvider, VerdictCard } from "./Review";
 import { EditHistory } from "./Edits";
 import SourceBadge from "./SourceBadge";
 import { buildReport, type BasicRow } from "@/lib/report";
+import { ARTICLES, RESTRICTIONS } from "@/lib/law";
+import { restrictionViews, selectRestrictions } from "@/lib/review-core";
 import type { Parcel } from "@/lib/types";
 
 function Rows({ rows }: { rows: BasicRow[] }) {
@@ -25,7 +28,9 @@ function Rows({ rows }: { rows: BasicRow[] }) {
 
 export default function Report({ parcel }: { parcel: Parcel }) {
   const v = buildReport(parcel);
+  const restrictions = restrictionViews(selectRestrictions(parcel, RESTRICTIONS), ARTICLES);
   return (
+    <ReviewProvider parcelId={parcel.id}>
     <div className="grid min-h-0 flex-1 grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4 xl:grid-rows-2" aria-label={`${v.title} 종합현황`}>
       <ReportCard title="기본 정보" detail={<DetailLines lines={v.basicDetail} />}>
         <Rows rows={v.basic} />
@@ -39,7 +44,7 @@ export default function Report({ parcel }: { parcel: Parcel }) {
         <Lines lines={v.leases.summary} />
       </ReportCard>
 
-      <PendingCard title="매각가능여부 검토" note="저장된 법령·내규를 근거로 판정을 만드는 기능은 작업 9에서 이 칸에 추가합니다." />
+      <VerdictCard />
 
       <ReportCard title="변상금 부과 현황" count={v.penalties.count} source={v.penalties.source} detail={<DetailLines lines={v.penalties.detail} />} history={<><DetailLines lines={v.penalties.history} /><EditHistory parcelId={parcel.id} item="변상금" /></>} historyCount={v.penalties.historyCount} edit={{ parcelId: parcel.id, item: "변상금" }}>
         <Lines lines={v.penalties.summary} />
@@ -53,7 +58,8 @@ export default function Report({ parcel }: { parcel: Parcel }) {
         <Rows rows={v.etc.rows} />
       </ReportCard>
 
-      <PendingCard title="대부·처분 제한사항 / 관리방안" note="제한 조항과 주의사항은 작업 9에서 이 칸에 추가합니다." />
+      <ManagementCard restrictions={restrictions} />
     </div>
+    </ReviewProvider>
   );
 }
