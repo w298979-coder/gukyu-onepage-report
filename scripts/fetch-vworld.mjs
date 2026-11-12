@@ -1,4 +1,4 @@
-// Design Ref: §3.1 — 포털 30건의 토지 정보를 브이월드에서 조회해 data/vworld-parcels.json 으로 저장한다.
+// Design Ref: §3.1 — 포털 29건의 토지 정보를 브이월드에서 조회해 data/vworld-parcels.json 으로 저장한다.
 // Plan: 작업 2. 키는 서버 쪽(이 스크립트)에서만 읽고, 출력과 파일에는 남기지 않는다.
 //
 // 실행: node --env-file=.env scripts/fetch-vworld.mjs
