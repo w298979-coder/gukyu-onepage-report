@@ -91,7 +91,8 @@ function makeVirtual(p, v, i, area) {
     id: `${occ.id.replace("-o", "-p")}-${++penaltySeq}`,
     점유자id: occ.id,
     부과일: iso(year, 1 + Math.floor(r() * 12), 1 + Math.floor(r() * 28)),
-    금액: area ? round1000(price * Math.max(1, occ.점유면적 ?? area) * 0.1 * (months / 12)) : null,
+    // 변상금 = 사용료·대부료의 120% (국유재산법 제72조①). 대부료는 공시지가×면적×5%로 단순 가정한 가상 값.
+    금액: area ? round1000(price * Math.max(1, occ.점유면적 ?? area) * 0.05 * 1.2 * (months / 12)) : null,
     납부상태: status,
   });
   const complaint = (k, y, text, status) => ({

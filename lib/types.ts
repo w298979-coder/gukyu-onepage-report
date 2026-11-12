@@ -126,14 +126,18 @@ export interface LawArticle {
   id: string;
   문서명: string;
   조문번호: string;
+  /** 조문 제목. 삭제된 조문은 없을 수 있다. */
+  제목?: string | null;
   내용: string;
   출처주소: string;
 }
 
 /** 대부·처분을 제한하는 조항. 적용 조건에 맞는 필지에만 코드가 골라 붙인다. */
 export interface Restriction {
+  /** 근거 조문 id (data/law/*.json 의 articles[].id) */
   조문id: string;
-  대상: "대부" | "처분";
+  /** 대부·처분 제한, 또는 관리 중 주의할 점("관리") */
+  대상: "대부" | "처분" | "관리";
   적용조건: {
     상태?: PortalStatus[];
     지목?: string[];
